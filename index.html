@@ -1071,6 +1071,26 @@ td { padding: 11px 14px; font-size: 12.5px; color: var(--text); vertical-align: 
             <option value="KONFIRMASI">Konfirmasi</option>
           </select>
         </div>
+        <div class="filter-group" id="indikasiFilterGroup">
+          <label>Indikasi Kegiatan <span style="font-size:9px;background:#fff8e1;color:#b57900;border:1px solid #e6a81744;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle">Belum Terbit</span></label>
+          <select id="indikasiFilter" onchange="applyFilters()" style="min-width:220px">
+            <option value="">Semua Indikasi</option>
+            <option value="Permukiman/Perkantoran/Real Estate/Industri Niaga">1. Permukiman/Perkantoran/Real Estate/Industri Niaga</option>
+            <option value="Dermaga/Jetty/Terminal Khusus/TUKS">2. Dermaga/Jetty/Terminal Khusus/TUKS</option>
+            <option value="Hotel/Resort/Restoran/Pariwisata">3. Hotel/Resort/Restoran/Pariwisata</option>
+            <option value="Instalasi Perikanan/ALSE">4. Instalasi Perikanan/ALSE</option>
+            <option value="Jembatan">5. Jembatan</option>
+            <option value="Landasan Pacu">6. Landasan Pacu</option>
+            <option value="Pengaman Pantai">7. Pengaman Pantai</option>
+            <option value="Timbunan Lahan">8. Timbunan Lahan</option>
+            <option value="Budidaya Rumput Laut">9. Budidaya Rumput Laut</option>
+            <option value="Budidaya KJA">10. Budidaya KJA</option>
+            <option value="Budidaya Mutiara">11. Budidaya Mutiara</option>
+            <option value="Budidaya Lainnya">12. Budidaya Lainnya</option>
+            <option value="Alat Tangkap Menetap (Bagan/Rumpon/dll)">13. Alat Tangkap Menetap (Bagan/Rumpon/dll)</option>
+            <option value="Pertambangan">14. Pertambangan</option>
+          </select>
+        </div>
         <button class="filter-reset" onclick="resetFilters()">↺ Reset</button>
         <div class="filter-count-pill" id="filterCount">Memuat...</div>
       </div>
@@ -1576,15 +1596,34 @@ function initTable() {
 }
 
 function applyFilters() {
-  var q      = (document.getElementById('searchInput') && document.getElementById('searchInput').value || '').toLowerCase();
-  var prov   = document.getElementById('provFilter') && document.getElementById('provFilter').value || '';
-  var status = document.getElementById('statusFilter') && document.getElementById('statusFilter').value || '';
-  var jenis  = document.getElementById('jenisFilter') && document.getElementById('jenisFilter').value || '';
+  var q        = (document.getElementById('searchInput') && document.getElementById('searchInput').value || '').toLowerCase();
+  var prov     = document.getElementById('provFilter') && document.getElementById('provFilter').value || '';
+  var status   = document.getElementById('statusFilter') && document.getElementById('statusFilter').value || '';
+  var jenis    = document.getElementById('jenisFilter') && document.getElementById('jenisFilter').value || '';
+  var indikasi = document.getElementById('indikasiFilter') && document.getElementById('indikasiFilter').value || '';
+
+  // If indikasi filter is active, force status = Belum Terbit automatically
+  if (indikasi) {
+    var statusEl = document.getElementById('statusFilter');
+    if (statusEl && statusEl.value !== 'Belum Terbit') {
+      statusEl.value = 'Belum Terbit';
+      status = 'Belum Terbit';
+    }
+  }
+
+  // Show/hide indikasi filter hint
+  var grp = document.getElementById('indikasiFilterGroup');
+  if (grp) grp.style.opacity = (status === '' || status === 'Belum Terbit') ? '1' : '0.35';
 
   filtered = allRecords.filter(function(d) {
     if (prov   && d.provinsi !== prov)   return false;
     if (status && d.status   !== status) return false;
     if (jenis  && d.jenis    !== jenis)  return false;
+    if (indikasi) {
+      // Only applies to Belum Terbit; categorize and match
+      if (d.status !== 'Belum Terbit') return false;
+      if (categorizeKegiatan(d.kegiatan) !== indikasi) return false;
+    }
     if (q) {
       var hay = ((d.no_kkprl||'') + ' ' + (d.nama_subj||'') + ' ' + (d.kegiatan||'') + ' ' + (d.provinsi||'')).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -1609,6 +1648,9 @@ function resetFilters() {
   document.getElementById('provFilter').value = '';
   document.getElementById('statusFilter').value = '';
   document.getElementById('jenisFilter').value = '';
+  document.getElementById('indikasiFilter').value = '';
+  var grp = document.getElementById('indikasiFilterGroup');
+  if (grp) grp.style.opacity = '1';
   sortField = null;
   document.querySelectorAll('th').forEach(function(t) { t.classList.remove('sorted'); });
   applyFilters();
