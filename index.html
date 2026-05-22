@@ -993,6 +993,47 @@ td { padding: 11px 14px; font-size: 12.5px; color: var(--text); vertical-align: 
         </div>
       </div>
 
+      <!-- INDIKASI KEGIATAN BELUM TERBIT -->
+      <div class="sec-head" style="margin-bottom:14px;margin-top:8px">
+        <div>
+          <div class="sec-title">Indikasi Kegiatan — Belum Terbit</div>
+          <div class="sec-sub">Klasifikasi 653 data KKPRL Belum Terbit berdasarkan 14 indikasi kegiatan pemanfaatan ruang laut</div>
+        </div>
+      </div>
+
+      <!-- Summary pills -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px" id="indikasiPills"></div>
+
+      <!-- Horizontal bar chart -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-card-title">Distribusi Indikasi Kegiatan (Belum Terbit)</div>
+        <div class="chart-card-sub">Jumlah KKPRL per jenis kegiatan yang belum diterbitkan sertifikatnya</div>
+        <div class="canvas-wrap" style="height:360px">
+          <canvas id="cIndikasi" role="img" aria-label="Bar chart indikasi kegiatan belum terbit">Distribusi indikasi kegiatan</canvas>
+        </div>
+      </div>
+
+      <!-- Detail table by indikasi -->
+      <div class="chart-card">
+        <div class="chart-card-title">Rincian Indikasi Kegiatan Belum Terbit</div>
+        <div class="chart-card-sub">Data lengkap per jenis indikasi kegiatan beserta provinsi terdampak</div>
+        <div style="overflow-x:auto;margin-top:12px">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:var(--navy)">
+                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;width:32px">No</th>
+                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Indikasi Kegiatan</th>
+                <th style="padding:10px 14px;text-align:center;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Jumlah</th>
+                <th style="padding:10px 14px;text-align:center;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">%</th>
+                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Provinsi Utama</th>
+                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Proporsi</th>
+              </tr>
+            </thead>
+            <tbody id="indikasiTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </section>
 
 
@@ -1389,6 +1430,136 @@ function buildAnalyticsCharts() {
       }
     }
   });
+
+  // ── INDIKASI KEGIATAN BELUM TERBIT ──
+  buildIndikasiChart();
+}
+
+/* ──────── INDIKASI KEGIATAN ──────── */
+var INDIKASI_CATS = [
+  { no:1,  name: "Permukiman/Perkantoran/Real Estate/Industri Niaga", short:"Permukiman/\nReal Estate", kw:["PERMUKIMAN","PERKANTORAN","REAL ESTATE","INDUSTRI NIAGA","INSUDTRI NIAGA","INSUATRI NIAGA"] },
+  { no:2,  name: "Dermaga/Jetty/Terminal Khusus/TUKS", short:"Dermaga/Jetty/\nTUKS", kw:["DERMAGA","JETTY","TERMINAL KHUSUS","TUKS"] },
+  { no:3,  name: "Hotel/Resort/Restoran/Pariwisata", short:"Hotel/Resort/\nPariwisata", kw:["HOTEL","RESORT","RESTORAN","PARIWISATA"] },
+  { no:4,  name: "Instalasi Perikanan/ALSE", short:"Instalasi\nPerikanan/ALSE", kw:["INSTALASI PERIKANAN","ALSE"] },
+  { no:5,  name: "Jembatan", short:"Jembatan", kw:["JEMBATAN"] },
+  { no:6,  name: "Landasan Pacu", short:"Landasan Pacu", kw:["LANDASAN PACU"] },
+  { no:7,  name: "Pengaman Pantai", short:"Pengaman Pantai", kw:["PENGAMAN PANTAI"] },
+  { no:8,  name: "Timbunan Lahan", short:"Timbunan Lahan", kw:["TIMBUNAN LAHAN"] },
+  { no:9,  name: "Budidaya Rumput Laut", short:"Budidaya\nRumput Laut", kw:["BUDIDAYA RUMPUT LAUT"] },
+  { no:10, name: "Budidaya KJA", short:"Budidaya KJA", kw:["BUDIDAYA KJA"] },
+  { no:11, name: "Budidaya Mutiara", short:"Budidaya Mutiara", kw:["BUDIDAYA MUTIARA"] },
+  { no:12, name: "Budidaya Lainnya", short:"Budidaya Lainnya", kw:["BUDIDAYA LAINNYA","BUDIDAYA"] },
+  { no:13, name: "Alat Tangkap Menetap (Bagan/Rumpon/dll)", short:"Alat Tangkap\nMenetap", kw:["ALAT TANGKAP MENETAP","BAGAN","RUMPON"] },
+  { no:14, name: "Pertambangan", short:"Pertambangan", kw:["PERTAMBANGAN","TAMBANG"] },
+];
+
+function categorizeKegiatan(k) {
+  var u = (k || '').toString().trim().toUpperCase();
+  if (!u) return "Lainnya";
+  for (var i = 0; i < INDIKASI_CATS.length; i++) {
+    for (var j = 0; j < INDIKASI_CATS[i].kw.length; j++) {
+      if (u.indexOf(INDIKASI_CATS[i].kw[j]) >= 0) return INDIKASI_CATS[i].name;
+    }
+  }
+  return "Lainnya";
+}
+
+function buildIndikasiChart() {
+  // Count per category from live records
+  var belumRecs = allRecords.filter(function(r) { return r.status === 'Belum Terbit'; });
+  var counts = {};
+  var provBycat = {};
+  INDIKASI_CATS.forEach(function(c) { counts[c.name] = 0; provBycat[c.name] = {}; });
+  counts['Lainnya'] = 0; provBycat['Lainnya'] = {};
+
+  belumRecs.forEach(function(r) {
+    var cat = categorizeKegiatan(r.kegiatan);
+    counts[cat] = (counts[cat] || 0) + 1;
+    if (r.provinsi) {
+      provBycat[cat] = provBycat[cat] || {};
+      provBycat[cat][r.provinsi] = (provBycat[cat][r.provinsi] || 0) + 1;
+    }
+  });
+
+  // Build sorted list (by count desc, only non-zero)
+  var sorted = INDIKASI_CATS.map(function(c) {
+    return { no: c.no, name: c.name, short: c.short, count: counts[c.name] || 0, provs: provBycat[c.name] || {} };
+  }).filter(function(x) { return x.count > 0; });
+  if (counts['Lainnya'] > 0) sorted.push({ no:'-', name:'Lainnya', short:'Lainnya', count: counts['Lainnya'], provs: provBycat['Lainnya'] || {} });
+  sorted.sort(function(a,b) { return b.count - a.count; });
+
+  var total = belumRecs.length;
+  var COLORS = [
+    '#1565c0','#00796b','#e6a817','#6a1b9a','#c62828','#00838f',
+    '#558b2f','#4527a0','#ad1457','#00695c','#f57f17','#283593',
+    '#0d4a8a','#bf360c','#37474f'
+  ];
+
+  // ── Horizontal bar chart ──
+  new Chart(document.getElementById('cIndikasi'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(function(x) { return x.short; }),
+      datasets: [{
+        label: 'Jumlah KKPRL',
+        data: sorted.map(function(x) { return x.count; }),
+        backgroundColor: sorted.map(function(x, i) { return COLORS[i % COLORS.length]; }),
+        borderRadius: 5,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return sorted[items[0].dataIndex].name; },
+            label: function(c) { return ' Jumlah: ' + c.raw + ' (' + (c.raw/total*100).toFixed(1) + '%)'; }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#eef3f8' }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 }, crossAlign: 'far' } }
+      }
+    }
+  });
+
+  // ── Summary pills ──
+  var pillWrap = document.getElementById('indikasiPills');
+  if (pillWrap) {
+    pillWrap.innerHTML = sorted.slice(0,6).map(function(x, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--border);border-radius:10px;padding:8px 14px;box-shadow:var(--shadow-sm)">' +
+        '<span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[i % COLORS.length] + ';flex-shrink:0;display:inline-block"></span>' +
+        '<span style="font-size:12px;font-weight:600;color:var(--navy)">' + x.count + '</span>' +
+        '<span style="font-size:11.5px;color:var(--muted)">' + x.name.replace(/\n/g,' ') + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ── Detail table ──
+  var tbody = document.getElementById('indikasiTableBody');
+  if (tbody) {
+    tbody.innerHTML = sorted.map(function(x, i) {
+      var pct = (x.count / total * 100).toFixed(1);
+      // Top province
+      var provEntries = Object.entries(x.provs).sort(function(a,b){return b[1]-a[1];});
+      var topProv = provEntries.length > 0 ? provEntries[0][0].replace('KEPULAUAN ','KEP. ') : '—';
+      if (provEntries.length > 1) topProv += ' +' + (provEntries.length - 1);
+      // Bar proportion
+      var barPct = (x.count / sorted[0].count * 100).toFixed(0);
+      return '<tr style="border-bottom:1px solid var(--bg)">' +
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);font-weight:600">' + x.no + '</td>' +
+        '<td style="padding:10px 14px;font-size:12.5px;font-weight:600;color:var(--navy)">' + x.name.replace(/\n/g,' ') + '</td>' +
+        '<td style="padding:10px 14px;text-align:center"><span style="background:' + COLORS[i%COLORS.length] + '22;color:' + COLORS[i%COLORS.length] + ';border:1px solid ' + COLORS[i%COLORS.length] + '44;border-radius:20px;padding:3px 12px;font-size:13px;font-weight:700">' + x.count + '</span></td>' +
+        '<td style="padding:10px 14px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">' + pct + '%</td>' +
+        '<td style="padding:10px 14px;font-size:11.5px;color:var(--text2)">' + topProv + '</td>' +
+        '<td style="padding:10px 24px 10px 14px"><div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + barPct + '%;background:' + COLORS[i%COLORS.length] + ';border-radius:4px"></div></div></td>' +
+        '</tr>';
+    }).join('');
+  }
 }
 
 /* ──────── TABLE ──────── */
