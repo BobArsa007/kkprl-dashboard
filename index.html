@@ -427,17 +427,27 @@ td{padding:11px 14px;font-size:12.5px;color:var(--text);vertical-align:middle}
         </div>
         <div class="map-meta"><span><strong id="map-feat-count">—</strong> fitur</span><button onclick="mapFitAll()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;color:var(--text2)">↔ Fit</button></div>
         <div class="map-feat-list" id="map-feat-list"></div>
-        <div id="map-detail-panel" style="display:none;border-top:2px solid var(--sky);background:var(--bg);padding:10px 14px;flex-shrink:0;font-size:12px;max-height:260px;overflow-y:auto">
-          <div style="font-weight:700;color:var(--navy);margin-bottom:4px;font-size:13px;line-height:1.3" id="mdp-name">—</div>
-          <div style="color:var(--muted);margin-bottom:8px;font-size:11px" id="mdp-meta">—</div>
-          <div style="display:flex;flex-direction:column;gap:4px" id="mdp-rows"></div>
-          <a id="mdp-gmaps" href="#" target="_blank" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:7px 12px;background:#e8f0fb;border:1px solid rgba(21,101,192,.2);border-radius:7px;color:#1565c0;font-weight:600;font-size:12px;text-decoration:none">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Buka di Google Maps
-          </a>
+      </div>
+      <div class="map-panel">
+        <div id="leaflet-map"></div>
+        <!-- Floating detail popup -->
+        <div id="map-float-popup" style="display:none;position:absolute;bottom:20px;right:16px;z-index:1000;width:280px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(5,34,68,.18);border:1px solid var(--border);overflow:hidden">
+          <div style="background:linear-gradient(135deg,#052244,#0d4a8a);padding:10px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font-weight:700;color:#fff;font-size:13px;line-height:1.3" id="mdp-name">—</div>
+              <div id="mdp-meta" style="margin-top:4px"></div>
+            </div>
+            <button onclick="closeMapPopup()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center">×</button>
+          </div>
+          <div style="padding:10px 14px;display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto" id="mdp-rows"></div>
+          <div style="padding:8px 14px 12px">
+            <a id="mdp-gmaps" href="#" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:#1565c0;border-radius:8px;color:#fff;font-weight:600;font-size:12px;text-decoration:none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Buka di Google Maps
+            </a>
+          </div>
         </div>
       </div>
-      <div class="map-panel"><div id="leaflet-map"></div></div>
     </div>
   </section>
 
@@ -1066,35 +1076,43 @@ function selectMapFeature(idx) {
   }, 50);
 }
 
+function closeMapPopup() {
+  document.getElementById('map-float-popup').style.display = 'none';
+  if (_selectedMapIdx !== null) {
+    _applyHighlight(_selectedMapIdx, false);
+    _selectedMapIdx = null;
+  }
+}
+
 function renderMapDetail(r) {
-  var panel = document.getElementById('map-detail-panel');
-  panel.style.display = 'block';
+  var popup = document.getElementById('map-float-popup');
+  popup.style.display = 'block';
 
   var name = r.nama_subj || r.kegiatan || '(tanpa nama)';
   var isSudah = r.status === 'SUDAH_TERBIT';
   document.getElementById('mdp-name').textContent = name;
   document.getElementById('mdp-meta').innerHTML =
-    '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-weight:700;background:'+(isSudah?'#e0f5f1':'#fff8e1')+';color:'+(isSudah?'#00695c':'#b57900')+'">'+(isSudah?'✅ Sudah Terbit':'⏳ Belum Terbit')+'</span>';
+    '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;background:'+(isSudah?'rgba(0,191,165,.25)':'rgba(230,168,23,.25)')+';color:'+(isSudah?'#80ffee':'#ffd54f')+'">'+(isSudah?'✅ Sudah Terbit':'⏳ Belum Terbit')+'</span>';
 
   var fields = [
-    ['Provinsi',  r.provinsi],
-    ['Kegiatan',  r.kegiatan],
-    ['Jenis',     r.jenis],
-    ['Kategori',  r.kategori],
-    ['No. KKPRL', r.no_kkprl],
-    ['Luas',      r.luas_ha ? r.luas_ha.toFixed(3) + ' ha' : null],
+    ['Provinsi',    r.provinsi],
+    ['Kegiatan',    r.kegiatan],
+    ['Jenis',       r.jenis],
+    ['Kategori',    r.kategori],
+    ['No. KKPRL',   r.no_kkprl],
+    ['Luas',        r.luas_ha ? r.luas_ha.toFixed(3) + ' ha' : null],
     ['Tgl. Terbit', r.terbit],
   ];
   document.getElementById('mdp-rows').innerHTML = fields
     .filter(function(f){ return f[1]; })
     .map(function(f){
-      return '<div style="display:flex;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)">'+
-        '<span style="color:var(--muted);min-width:80px;font-size:11px">'+f[0]+'</span>'+
+      return '<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:var(--muted);min-width:78px;font-size:11px;flex-shrink:0">'+f[0]+'</span>'+
         '<span style="color:var(--text);font-weight:500;font-size:11px;flex:1;word-break:break-word">'+f[1]+'</span>'+
         '</div>';
     }).join('');
 
-  // Google Maps link — use centroid of geometry
+  // Google Maps link
   var lat = null, lng = null;
   try {
     var g = r._geom;
