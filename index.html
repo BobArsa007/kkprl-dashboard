@@ -3,1718 +3,981 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard KKPRL — Kementerian Kelautan dan Perikanan RI</title>
-<meta name="description" content="Dashboard Kesesuaian Kegiatan Pemanfaatan Ruang Laut — Kementerian Kelautan dan Perikanan Republik Indonesia">
-
-<!-- Google Fonts -->
+<title>Dashboard KKPRL — KKP RI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-
-<!-- Chart.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-/* ─── RESET & BASE ─── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; }
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #eef3f8;
-  color: #0d2b4a;
-  min-height: 100vh;
-  overflow-x: hidden;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#eef3f8;color:#0d2b4a;min-height:100vh;overflow-x:hidden}
+:root{
+  --navy:#052244;--ocean:#0d4a8a;--cobalt:#1565c0;--sky:#1e88e5;--teal:#00796b;--aqua:#00bfa5;
+  --seafoam:#e0f7f4;--gold:#e6a817;--gold-lt:#fff8e1;--coral:#e53935;--coral-lt:#fce4ec;
+  --purple:#6a1b9a;--purple-lt:#f3e5f5;--bg:#eef3f8;--surface:#ffffff;--border:#d5e0ec;
+  --muted:#6b8aaa;--text:#0d2b4a;--text2:#3a5e82;
+  --shadow-sm:0 2px 8px rgba(5,34,68,.07);--shadow-md:0 4px 20px rgba(5,34,68,.10);
+  --shadow-lg:0 8px 40px rgba(5,34,68,.13);--radius:14px;--radius-sm:8px;
 }
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#b0c4d8;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--ocean)}
 
-/* ─── CSS VARIABLES ─── */
-:root {
-  --navy:      #052244;
-  --ocean:     #0d4a8a;
-  --cobalt:    #1565c0;
-  --sky:       #1e88e5;
-  --teal:      #00796b;
-  --aqua:      #00bfa5;
-  --seafoam:   #e0f7f4;
-  --gold:      #e6a817;
-  --gold-lt:   #fff8e1;
-  --coral:     #e53935;
-  --coral-lt:  #fce4ec;
-  --purple:    #6a1b9a;
-  --purple-lt: #f3e5f5;
-  --bg:        #eef3f8;
-  --surface:   #ffffff;
-  --border:    #d5e0ec;
-  --muted:     #6b8aaa;
-  --text:      #0d2b4a;
-  --text2:     #3a5e82;
-  --shadow-sm: 0 2px 8px rgba(5,34,68,.07);
-  --shadow-md: 0 4px 20px rgba(5,34,68,.10);
-  --shadow-lg: 0 8px 40px rgba(5,34,68,.13);
-  --radius:    14px;
-  --radius-sm: 8px;
-}
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
 
-/* ─── SCROLLBAR ─── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: #b0c4d8; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ocean); }
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow:hidden}
+.sidebar::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 140% 60% at 50% -10%,rgba(0,191,165,.18) 0%,transparent 70%),radial-gradient(ellipse 80% 80% at 110% 110%,rgba(21,101,192,.25) 0%,transparent 60%);pointer-events:none}
+.sidebar-brand{padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08);position:relative}
+.brand-emblem{width:48px;height:48px;background:linear-gradient(135deg,var(--aqua),var(--sky));border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(0,191,165,.35)}
+.brand-emblem svg{width:28px;height:28px}
+.brand-text h2{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;line-height:1.2}
+.brand-text span{font-size:10px;color:rgba(255,255,255,.5);font-weight:400;display:block;margin-top:2px}
+.sidebar-section-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:1.2px;text-transform:uppercase;padding:20px 20px 8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 20px;margin:2px 10px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.6);font-size:13.5px;font-weight:500;text-decoration:none;border:none;background:none;width:calc(100% - 20px);text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.nav-item.active{background:linear-gradient(135deg,rgba(0,191,165,.25),rgba(30,136,229,.2));color:#fff;box-shadow:inset 0 0 0 1px rgba(0,191,165,.3)}
+.nav-icon{font-size:18px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:rgba(0,191,165,.3);color:var(--aqua);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);line-height:1.6}
+.sidebar-footer strong{color:rgba(255,255,255,.5);display:block;font-size:11px}
 
-/* ─── LAYOUT ─── */
-.layout { display: flex; min-height: 100vh; }
+/* MAIN */
+.main{margin-left:260px;flex:1;display:flex;flex-direction:column;min-width:0}
 
-/* ─── SIDEBAR ─── */
-.sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  background: var(--navy);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  z-index: 100;
-  overflow: hidden;
-}
-.sidebar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 140% 60% at 50% -10%, rgba(0,191,165,.18) 0%, transparent 70%),
-    radial-gradient(ellipse 80% 80% at 110% 110%, rgba(21,101,192,.25) 0%, transparent 60%);
-  pointer-events: none;
-}
-.sidebar-brand {
-  padding: 24px 20px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  position: relative;
-}
-.brand-emblem {
-  width: 48px; height: 48px;
-  background: linear-gradient(135deg, var(--aqua), var(--sky));
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0,191,165,.35);
-}
-.brand-emblem svg { width: 28px; height: 28px; }
-.brand-text { overflow: hidden; }
-.brand-text h2 {
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -.3px;
-  line-height: 1.2;
-}
-.brand-text span {
-  font-size: 10px;
-  color: rgba(255,255,255,.5);
-  font-weight: 400;
-  line-height: 1.4;
-  display: block;
-  margin-top: 2px;
-}
-.sidebar-section-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(255,255,255,.35);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  padding: 20px 20px 8px;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 11px 20px;
-  margin: 2px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all .2s;
-  color: rgba(255,255,255,.6);
-  font-size: 13.5px;
-  font-weight: 500;
-  text-decoration: none;
-  border: none;
-  background: none;
-  width: calc(100% - 20px);
-  text-align: left;
-}
-.nav-item:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
-.nav-item.active {
-  background: linear-gradient(135deg, rgba(0,191,165,.25), rgba(30,136,229,.2));
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(0,191,165,.3);
-}
-.nav-item .nav-icon { font-size: 18px; width: 20px; text-align: center; }
-.nav-item .nav-badge {
-  margin-left: auto;
-  background: rgba(0,191,165,.3);
-  color: var(--aqua);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 10px;
-}
-.sidebar-footer {
-  margin-top: auto;
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  font-size: 11px;
-  color: rgba(255,255,255,.3);
-  line-height: 1.6;
-}
-.sidebar-footer strong { color: rgba(255,255,255,.5); display: block; font-size: 11px; }
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm)}
+.topbar-title{font-size:14px;font-weight:700;color:var(--navy)}
+.topbar-breadcrumb{font-size:12px;color:var(--muted)}
+.topbar-breadcrumb span{color:var(--sky);font-weight:600}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topbar-date{font-size:12px;color:var(--muted);background:var(--bg);padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-weight:500}
+.topbar-badge{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--teal);background:var(--seafoam);padding:5px 12px;border-radius:20px;border:1px solid rgba(0,121,107,.2)}
+.live-dot{width:7px;height:7px;background:var(--aqua);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
 
-/* ─── MAIN AREA ─── */
-.main {
-  margin-left: 260px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
+/* PAGES */
+.page{padding:28px;display:none}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.page.active>*{animation:fadeUp .4s ease both}
+.page.active>*:nth-child(1){animation-delay:0s}
+.page.active>*:nth-child(2){animation-delay:.05s}
+.page.active>*:nth-child(3){animation-delay:.10s}
+.page.active>*:nth-child(4){animation-delay:.15s}
+.page.active>*:nth-child(5){animation-delay:.20s}
 
-/* ─── TOP BAR ─── */
-.topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  box-shadow: var(--shadow-sm);
-}
-.topbar-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--navy);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.topbar-breadcrumb {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 400;
-}
-.topbar-breadcrumb span { color: var(--sky); font-weight: 600; }
-.topbar-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.topbar-date {
-  font-size: 12px;
-  color: var(--muted);
-  background: var(--bg);
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  font-weight: 500;
-}
-.topbar-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--teal);
-  background: var(--seafoam);
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(0,121,107,.2);
-}
-.live-dot {
-  width: 7px; height: 7px;
-  background: var(--aqua);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%,100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .5; transform: scale(1.4); }
-}
+/* MAP PAGE — full height, no padding */
+#page-map{padding:0;height:calc(100vh - 60px);display:none;flex-direction:column}
+#page-map.active{display:flex}
+#page-map.active>*{animation:none}
 
-/* ─── PAGE CONTENT ─── */
-.page { padding: 28px; display: none; }
-.page.active { display: block; }
+/* HERO */
+.hero{background:linear-gradient(135deg,#052244 0%,#0d4a8a 45%,#0b7a6e 100%);border-radius:var(--radius);padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='w' x='0' y='0' width='120' height='120' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 80 Q30 60 60 80 Q90 100 120 80 L120 120 L0 120Z' fill='rgba(255,255,255,0.03)'/%3E%3Cpath d='M0 60 Q30 40 60 60 Q90 80 120 60 L120 120 L0 120Z' fill='rgba(0,191,165,0.05)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='120' height='120' fill='url(%23w)'/%3E%3C/svg%3E");pointer-events:none}
+.hero-inner{position:relative;display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap}
+.hero-text h1{font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:6px}
+.hero-text p{font-size:13px;color:rgba(255,255,255,.65);max-width:520px;line-height:1.6}
+.hero-pills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.85)}
+.pill.accent{background:rgba(0,191,165,.2);border-color:rgba(0,191,165,.4);color:#80ffee}
+.hero-stats{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hs-num{font-family:'DM Serif Display',serif;font-size:34px;color:#fff;line-height:1}
+.hs-num.teal{color:var(--aqua)}
+.hs-num.gold{color:#ffd54f}
+.hs-lbl{font-size:10.5px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.7px;margin-top:4px;font-weight:600}
+.hero-divider{width:1px;background:rgba(255,255,255,.15);align-self:stretch}
 
-/* ─── HERO BANNER ─── */
-.hero {
-  background: linear-gradient(135deg, #052244 0%, #0d4a8a 45%, #0b7a6e 100%);
-  border-radius: var(--radius);
-  padding: 32px 36px;
-  margin-bottom: 24px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='w' x='0' y='0' width='120' height='120' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 80 Q30 60 60 80 Q90 100 120 80 L120 120 L0 120Z' fill='rgba(255,255,255,0.03)'/%3E%3Cpath d='M0 60 Q30 40 60 60 Q90 80 120 60 L120 120 L0 120Z' fill='rgba(0,191,165,0.05)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='120' height='120' fill='url(%23w)'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
-.hero-inner { position: relative; display: flex; align-items: flex-start; gap: 28px; flex-wrap: wrap; }
-.hero-text h1 {
-  font-size: 26px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -.5px;
-  margin-bottom: 6px;
-}
-.hero-text p {
-  font-size: 13px;
-  color: rgba(255,255,255,.65);
-  font-weight: 400;
-  max-width: 520px;
-  line-height: 1.6;
-}
-.hero-pills { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.pill {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 20px;
-  padding: 4px 14px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: rgba(255,255,255,.85);
-}
-.pill.accent { background: rgba(0,191,165,.2); border-color: rgba(0,191,165,.4); color: #80ffee; }
-.hero-stats { margin-left: auto; display: flex; gap: 20px; flex-wrap: wrap; }
-.hero-stat { text-align: center; }
-.hero-stat .hs-num { font-family: 'DM Serif Display', serif; font-size: 34px; color: #fff; line-height: 1; }
-.hero-stat .hs-num.teal { color: var(--aqua); }
-.hero-stat .hs-num.gold { color: #ffd54f; }
-.hero-stat .hs-lbl { font-size: 10.5px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .7px; margin-top: 4px; font-weight: 600; }
-.hero-divider { width: 1px; background: rgba(255,255,255,.15); align-self: stretch; }
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card.k-total::before{background:linear-gradient(90deg,#1565c0,#1e88e5)}
+.kpi-card.k-sudah::before{background:linear-gradient(90deg,#00796b,#00bfa5)}
+.kpi-card.k-belum::before{background:linear-gradient(90deg,#e6a817,#ffcc02)}
+.kpi-card.k-luas::before{background:linear-gradient(90deg,#6a1b9a,#ab47bc)}
+.kpi-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+.k-total .kpi-icon{background:#e8f0fb}
+.k-sudah .kpi-icon{background:#e0f5f1}
+.k-belum .kpi-icon{background:#fff8e1}
+.k-luas .kpi-icon{background:#f3e5f5}
+.kpi-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.kpi-value{font-family:'DM Serif Display',serif;font-size:38px;color:var(--navy);line-height:1;margin-bottom:4px}
+.kpi-unit{font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--muted);font-weight:400;margin-left:2px}
+.kpi-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.kpi-bar{height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.k-total .kpi-bar-fill{background:linear-gradient(90deg,#1565c0,#1e88e5)}
+.k-sudah .kpi-bar-fill{background:linear-gradient(90deg,#00796b,#00bfa5)}
+.k-belum .kpi-bar-fill{background:linear-gradient(90deg,#e6a817,#ffcc02)}
+.k-luas .kpi-bar-fill{background:linear-gradient(90deg,#6a1b9a,#ab47bc)}
+.kpi-pct{font-size:12px;font-weight:700;margin-top:6px}
+.k-sudah .kpi-pct{color:var(--teal)}
+.k-belum .kpi-pct{color:var(--gold)}
+.k-luas .kpi-pct{color:var(--purple)}
+.k-total .kpi-pct{color:var(--cobalt)}
 
-/* ─── KPI CARDS ─── */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.kpi-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 22px 24px;
-  position: relative;
-  overflow: hidden;
-  cursor: default;
-  transition: transform .2s, box-shadow .2s;
-}
-.kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-.kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-.kpi-card.k-total::before { background: linear-gradient(90deg, #1565c0, #1e88e5); }
-.kpi-card.k-sudah::before { background: linear-gradient(90deg, #00796b, #00bfa5); }
-.kpi-card.k-belum::before { background: linear-gradient(90deg, #e6a817, #ffcc02); }
-.kpi-card.k-luas::before  { background: linear-gradient(90deg, #6a1b9a, #ab47bc); }
+/* SEC HEAD */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:15px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:10px}
+.sec-title::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--aqua),var(--sky));border-radius:2px;flex-shrink:0}
+.sec-sub{font-size:12px;color:var(--muted);margin-top:2px}
 
-.kpi-icon {
-  width: 44px; height: 44px;
-  border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-  margin-bottom: 16px;
-}
-.k-total .kpi-icon { background: #e8f0fb; }
-.k-sudah .kpi-icon { background: #e0f5f1; }
-.k-belum .kpi-icon { background: #fff8e1; }
-.k-luas  .kpi-icon { background: #f3e5f5; }
+/* CHART GRIDS */
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:24px}
+.chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-sm)}
+.chart-card.wide{grid-column:1/-1}
+.chart-card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+.canvas-wrap{position:relative;width:100%}
+.donut-wrap{position:relative}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-center .dc-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy);line-height:1}
+.donut-center .dc-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.legend{display:flex;flex-wrap:wrap;gap:12px 20px;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);font-weight:500}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
-.kpi-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  margin-bottom: 8px;
-}
-.kpi-value {
-  font-family: 'DM Serif Display', serif;
-  font-size: 38px;
-  color: var(--navy);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.kpi-unit {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  color: var(--muted);
-  font-weight: 400;
-  margin-left: 2px;
-}
-.kpi-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 12px;
-  font-weight: 400;
-}
-.kpi-bar { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-.kpi-bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
-.k-total .kpi-bar-fill { background: linear-gradient(90deg,#1565c0,#1e88e5); }
-.k-sudah .kpi-bar-fill { background: linear-gradient(90deg,#00796b,#00bfa5); }
-.k-belum .kpi-bar-fill { background: linear-gradient(90deg,#e6a817,#ffcc02); }
-.k-luas  .kpi-bar-fill { background: linear-gradient(90deg,#6a1b9a,#ab47bc); }
-.kpi-pct {
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 6px;
-}
-.k-sudah .kpi-pct { color: var(--teal); }
-.k-belum .kpi-pct { color: var(--gold); }
-.k-luas  .kpi-pct { color: var(--purple); }
-.k-total .kpi-pct { color: var(--cobalt); }
+/* PROV BARS */
+.prov-scroll{max-height:340px;overflow-y:auto;padding-right:4px}
+.prov-row{display:grid;grid-template-columns:170px 1fr 60px;align-items:center;gap:10px;margin-bottom:8px}
+.prov-name{font-size:12px;color:var(--text2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prov-bar-bg{height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+.prov-bar-fill{height:100%;border-radius:5px}
+.prov-count{font-size:12px;font-weight:700;color:var(--navy);text-align:right}
 
-/* ─── SECTION TITLE ─── */
-.sec-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.sec-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sec-title::before {
-  content: '';
-  width: 4px; height: 20px;
-  background: linear-gradient(180deg, var(--aqua), var(--sky));
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-.sec-sub {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 400;
-  margin-top: 2px;
-}
+/* ANALYTICS STATS */
+.analytics-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.astat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.astat .al{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.astat .av{font-size:20px;font-weight:700;color:var(--navy)}
+.astat .as{font-size:11px;color:var(--muted);margin-top:3px}
 
-/* ─── CHART CARDS ─── */
-.chart-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.chart-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.chart-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.chart-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 22px;
-  box-shadow: var(--shadow-sm);
-}
-.chart-card.wide { grid-column: 1 / -1; }
-.chart-card-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--navy);
-  margin-bottom: 4px;
-}
-.chart-card-sub {
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 16px;
-}
-.canvas-wrap {
-  position: relative;
-  width: 100%;
-}
+/* TABLE */
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;box-shadow:var(--shadow-sm)}
+.filter-group{display:flex;flex-direction:column;gap:5px}
+.filter-group label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.filter-group input,.filter-group select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s;height:38px}
+.filter-group input{min-width:240px}
+.filter-group select{min-width:160px}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--sky);background:#fff}
+.filter-reset{padding:8px 18px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;height:38px;transition:all .15s;align-self:flex-end}
+.filter-reset:hover{border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.filter-count-pill{margin-left:auto;align-self:flex-end;font-size:12px;font-weight:600;color:var(--cobalt);background:#e8f0fb;padding:6px 14px;border-radius:20px;height:38px;display:flex;align-items:center}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.tbl-scroll{overflow-x:auto;max-height:560px;overflow-y:auto}
+table{width:100%;border-collapse:collapse}
+thead{position:sticky;top:0;z-index:2}
+thead tr{background:var(--navy)}
+th{padding:11px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{background:rgba(255,255,255,.08)}
+th .sort-arrow{margin-left:4px;opacity:.4;font-size:9px}
+th.sorted .sort-arrow{opacity:1;color:var(--aqua)}
+tbody tr{border-bottom:1px solid var(--bg);transition:background .12s}
+tbody tr:hover{background:#f4f9ff}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 14px;font-size:12.5px;color:var(--text);vertical-align:middle}
+.td-mono{font-family:'Courier New',monospace;font-size:11px;color:var(--ocean)}
+.td-trunc{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-num{font-weight:600;font-size:12px}
+.td-idx{color:var(--muted);font-size:11px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-sudah{background:#e0f5f1;color:#00695c;border:1px solid rgba(0,121,107,.2)}
+.badge-belum{background:#fff8e1;color:#b57900;border:1px solid rgba(230,168,23,.2)}
+.badge-persetujuan{background:#e8f0fb;color:#1565c0}
+.badge-konfirmasi{background:#f3e5f5;color:#6a1b9a}
+.badge-berusaha{background:#e8f0fb;color:#1a237e}
+.badge-nonberusaha{background:#f1f8e9;color:#33691e}
+.badge-gray{background:var(--bg);color:var(--muted)}
+.tbl-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--bg);border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tbl-footer strong{color:var(--navy)}
+.pg-controls{display:flex;align-items:center;gap:6px}
+.pg-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif}
+.pg-btn:hover:not(:disabled){background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.pg-btn:disabled{opacity:.35;cursor:not-allowed}
+.pg-info{font-size:12px;color:var(--muted);padding:0 8px}
 
-/* ─── DONUT CENTER ─── */
-.donut-wrap { position: relative; }
-.donut-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-}
-.donut-center .dc-num {
-  font-family: 'DM Serif Display', serif;
-  font-size: 28px;
-  color: var(--navy);
-  line-height: 1;
-}
-.donut-center .dc-lbl { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+/* MAP LAYOUT */
+.map-layout{display:flex;flex:1;overflow:hidden;height:100%}
+.map-sidebar{width:300px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.map-sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px}
+.map-sidebar-header::before{content:'';width:3px;height:16px;background:linear-gradient(180deg,var(--aqua),var(--sky));border-radius:2px}
+.map-legend{padding:12px 16px;border-bottom:1px solid var(--border)}
+.map-legend-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:var(--text2)}
+.map-legend-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+.map-filters{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.map-filters label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.map-filters input,.map-filters select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:100%;background:var(--bg);color:var(--text);outline:none;font-family:'Plus Jakarta Sans',sans-serif}
+.map-filters input:focus,.map-filters select:focus{border-color:var(--sky);background:#fff}
+.map-feat-list{flex:1;overflow-y:auto;padding:4px}
+.map-feat-item{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:2px;border-radius:var(--radius-sm);cursor:pointer;transition:all .1s;border:1px solid transparent;border-left:3px solid transparent}
+.map-feat-item:hover{background:var(--bg);border-color:var(--border)}
+.map-feat-item.active{background:#eff8ff;border-color:rgba(21,112,239,.2);border-left-color:var(--sky)}
+.map-feat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.map-feat-name{font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.map-feat-name.unnamed{color:var(--muted);font-style:italic}
+.map-feat-prov{font-size:10px;color:var(--muted);white-space:nowrap}
+.map-feat-num{font-size:10px;color:var(--muted);min-width:24px;font-weight:600}
+.map-meta{padding:8px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
+.map-meta strong{color:var(--navy)}
+.map-panel{flex:1;position:relative}
+#leaflet-map{width:100%;height:100%}
 
-/* ─── LEGEND ─── */
-.legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 12px; }
-.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text2); font-weight: 500; }
-.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.page-footer{margin:32px 0 0;padding:20px 0 0;border-top:1px solid var(--border);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.page-footer a{color:var(--sky);text-decoration:none}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
 
-/* ─── PROVINCE BARS ─── */
-.prov-scroll { max-height: 340px; overflow-y: auto; padding-right: 4px; }
-.prov-row {
-  display: grid;
-  grid-template-columns: 170px 1fr 60px;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.prov-name { font-size: 12px; color: var(--text2); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.prov-bar-bg { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
-.prov-bar-fill { height: 100%; border-radius: 5px; }
-.prov-count { font-size: 12px; font-weight: 700; color: var(--navy); text-align: right; }
-
-/* ─── DATA TABLE PAGE ─── */
-.filter-bar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px;
-  box-shadow: var(--shadow-sm);
-}
-.filter-group { display: flex; flex-direction: column; gap: 5px; }
-.filter-group label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-.filter-group input,
-.filter-group select {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  color: var(--text);
-  background: var(--bg);
-  outline: none;
-  transition: border-color .2s;
-  height: 38px;
-}
-.filter-group input { min-width: 240px; }
-.filter-group select { min-width: 160px; }
-.filter-group input:focus,
-.filter-group select:focus { border-color: var(--sky); background: #fff; }
-.filter-reset {
-  padding: 8px 18px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  color: var(--muted);
-  cursor: pointer;
-  height: 38px;
-  transition: all .15s;
-  align-self: flex-end;
-}
-.filter-reset:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-lt); }
-.filter-count-pill {
-  margin-left: auto;
-  align-self: flex-end;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cobalt);
-  background: #e8f0fb;
-  padding: 6px 14px;
-  border-radius: 20px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-}
-
-/* ─── TABLE ─── */
-.table-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.tbl-scroll { overflow-x: auto; max-height: 560px; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; }
-thead { position: sticky; top: 0; z-index: 2; }
-thead tr { background: var(--navy); }
-th {
-  padding: 11px 14px;
-  text-align: left;
-  color: rgba(255,255,255,.85);
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .7px;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-}
-th:hover { background: rgba(255,255,255,.08); }
-th .sort-arrow { margin-left: 4px; opacity: .4; font-size: 9px; }
-th.sorted .sort-arrow { opacity: 1; color: var(--aqua); }
-tbody tr { border-bottom: 1px solid var(--bg); transition: background .12s; }
-tbody tr:hover { background: #f4f9ff; }
-tbody tr:last-child { border-bottom: none; }
-td { padding: 11px 14px; font-size: 12.5px; color: var(--text); vertical-align: middle; }
-.td-mono { font-family: 'Courier New', monospace; font-size: 11px; color: var(--ocean); }
-.td-trunc { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.td-num { font-weight: 600; font-size: 12px; }
-.td-idx { color: var(--muted); font-size: 11px; }
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.badge-sudah  { background: #e0f5f1; color: #00695c; border: 1px solid rgba(0,121,107,.2); }
-.badge-belum  { background: #fff8e1; color: #b57900; border: 1px solid rgba(230,168,23,.2); }
-.badge-persetujuan { background: #e8f0fb; color: #1565c0; }
-.badge-konfirmasi  { background: #f3e5f5; color: #6a1b9a; }
-.badge-berusaha    { background: #e8f0fb; color: #1a237e; }
-.badge-nonberusaha { background: #f1f8e9; color: #33691e; }
-.badge-gray        { background: var(--bg); color: var(--muted); }
-.tbl-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--muted);
-}
-.tbl-footer strong { color: var(--navy); }
-.pg-controls { display: flex; align-items: center; gap: 6px; }
-.pg-btn {
-  width: 32px; height: 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text2);
-  transition: all .15s;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.pg-btn:hover:not(:disabled) { background: var(--ocean); color: #fff; border-color: var(--ocean); }
-.pg-btn:disabled { opacity: .35; cursor: not-allowed; }
-.pg-info { font-size: 12px; color: var(--muted); padding: 0 8px; }
-
-/* ─── ANALYTICS PAGE ─── */
-.analytics-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.astat {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 16px 18px;
-  box-shadow: var(--shadow-sm);
-}
-.astat .al { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
-.astat .av { font-size: 20px; font-weight: 700; color: var(--navy); }
-.astat .as { font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-/* ─── FOOTER ─── */
-.page-footer {
-  margin: 32px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid var(--border);
-  font-size: 11px;
-  color: var(--muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.page-footer a { color: var(--sky); text-decoration: none; }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 1100px) {
-  .chart-grid-3 { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 900px) {
-  .sidebar { width: 220px; }
-  .main { margin-left: 220px; }
-  .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
-}
-@media (max-width: 700px) {
-  .sidebar { transform: translateX(-100%); }
-  .main { margin-left: 0; }
-  .hero-stats { display: none; }
-  .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .page { padding: 16px; }
-}
-
-/* ─── ANIMATIONS ─── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.page.active > * {
-  animation: fadeUp .4s ease both;
-}
-.page.active > *:nth-child(1) { animation-delay: 0s; }
-.page.active > *:nth-child(2) { animation-delay: .05s; }
-.page.active > *:nth-child(3) { animation-delay: .10s; }
-.page.active > *:nth-child(4) { animation-delay: .15s; }
-.page.active > *:nth-child(5) { animation-delay: .20s; }
-
-/* ─── MISC ─── */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--muted);
-  font-size: 14px;
-}
-.highlight-row { background: #fffbea !important; }
+/* RESPONSIVE */
+@media(max-width:1100px){.chart-grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.sidebar{width:220px}.main{margin-left:220px}.chart-grid-2,.chart-grid-3{grid-template-columns:1fr}}
+@media(max-width:700px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.hero-stats{display:none}.kpi-grid{grid-template-columns:1fr 1fr}.page{padding:16px}.map-sidebar{display:none}}
 </style>
 </head>
 <body>
-
 <div class="layout">
 
-  <!-- ────────── SIDEBAR ────────── -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-emblem">
-        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="14" cy="14" r="11" stroke="white" stroke-width="1.5" stroke-dasharray="3 2"/>
-          <ellipse cx="14" cy="14" rx="5" ry="10" stroke="white" stroke-width="1.5"/>
-          <path d="M3 14 Q8 11 14 14 Q20 17 25 14" stroke="white" stroke-width="1.5" fill="none"/>
-          <path d="M3 10 Q8 8 14 10 Q20 12 25 10" stroke="rgba(255,255,255,.5)" stroke-width="1" fill="none"/>
-          <circle cx="14" cy="14" r="2" fill="white"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <h2>KKP Dashboard</h2>
-        <span>Sistem Informasi KKPRL</span>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-emblem">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="11" stroke="white" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <ellipse cx="14" cy="14" rx="5" ry="10" stroke="white" stroke-width="1.5"/>
+        <path d="M3 14 Q8 11 14 14 Q20 17 25 14" stroke="white" stroke-width="1.5" fill="none"/>
+        <path d="M3 10 Q8 8 14 10 Q20 12 25 10" stroke="rgba(255,255,255,.5)" stroke-width="1" fill="none"/>
+        <circle cx="14" cy="14" r="2" fill="white"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h2>KKP Dashboard</h2>
+      <span>Sistem Informasi KKPRL</span>
+    </div>
+  </div>
+  <div class="sidebar-section-label">Menu Utama</div>
+  <button class="nav-item active" onclick="showPage('overview',this)"><span class="nav-icon">🏠</span> Ringkasan</button>
+  <button class="nav-item" onclick="showPage('analytics',this)"><span class="nav-icon">📈</span> Analitik</button>
+  <button class="nav-item" onclick="showPage('map',this)"><span class="nav-icon">🗺️</span> Peta Interaktif</button>
+  <button class="nav-item" onclick="showPage('table',this)"><span class="nav-icon">📋</span> Data Tabel<span class="nav-badge" id="nav-total-badge">—</span></button>
+  <div class="sidebar-section-label">Informasi</div>
+  <button class="nav-item" onclick="showPage('about',this)"><span class="nav-icon">ℹ️</span> Tentang KKPRL</button>
+  <div class="sidebar-footer">
+    <strong>Kementerian Kelautan dan Perikanan RI</strong>
+    Direktorat Jenderal Pengelolaan Ruang Laut<br>
+    Data diperbarui: Mei 2026
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <header class="topbar">
+    <div>
+      <div class="topbar-title">Dashboard KKPRL</div>
+      <div class="topbar-breadcrumb">Kesesuaian Kegiatan Pemanfaatan <span>Ruang Laut</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topbar-date">📅 —</div>
+      <div class="topbar-badge"><div class="live-dot"></div> Data Aktif</div>
+    </div>
+  </header>
+
+  <!-- OVERVIEW -->
+  <section class="page active" id="page-overview">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h1>Kesesuaian Kegiatan Pemanfaatan Ruang Laut</h1>
+          <p>Rekapitulasi data KKPRL yang diterbitkan oleh Kementerian Kelautan dan Perikanan Republik Indonesia — mencakup seluruh wilayah perairan nasional.</p>
+          <div class="hero-pills">
+            <span class="pill">🇮🇩 Nasional</span>
+            <span class="pill" id="pill-prov">🗺️ — Provinsi</span>
+            <span class="pill accent" id="pill-sudah">✅ — Terbit</span>
+            <span class="pill" id="pill-belum">⏳ — Proses</span>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hs-num" id="hs-total">—</div><div class="hs-lbl">Total KKPRL</div></div>
+          <div class="hero-divider"></div>
+          <div class="hero-stat"><div class="hs-num teal" id="hs-pct">—</div><div class="hs-lbl">Sudah Terbit</div></div>
+          <div class="hero-divider"></div>
+          <div class="hero-stat"><div class="hs-num gold" id="hs-luas">—</div><div class="hs-lbl">Total Luas</div></div>
+        </div>
       </div>
     </div>
-
-    <div class="sidebar-section-label">Menu Utama</div>
-    <button class="nav-item active" onclick="showPage('overview', this)">
-      <span class="nav-icon">🏠</span> Ringkasan
-    </button>
-    <button class="nav-item" onclick="showPage('analytics', this)">
-      <span class="nav-icon">📈</span> Analitik
-    </button>
-    <button class="nav-item" onclick="showPage('table', this)">
-      <span class="nav-icon">📋</span> Data Tabel
-      <span class="nav-badge">3.675</span>
-    </button>
-
-    <div class="sidebar-section-label">Informasi</div>
-    <button class="nav-item" onclick="showPage('about', this)">
-      <span class="nav-icon">ℹ️</span> Tentang KKPRL
-    </button>
-
-    <div class="sidebar-footer">
-      <strong>Kementerian Kelautan dan Perikanan RI</strong>
-      Loka Penataan Ruang Laut Serang<br>
-      Data diperbarui: Mei 2026
+    <div class="kpi-grid">
+      <div class="kpi-card k-total"><div class="kpi-icon">🌊</div><div class="kpi-label">Total KKPRL</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">Seluruh perizinan ruang laut</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div><div class="kpi-pct">100% dari total nasional</div></div>
+      <div class="kpi-card k-sudah"><div class="kpi-icon">✅</div><div class="kpi-label">Sudah Terbit</div><div class="kpi-value" id="kpi-sudah">—</div><div class="kpi-sub" id="kpi-sudah-sub">—</div><div class="kpi-bar"><div class="kpi-bar-fill" id="bar-sudah" style="width:0%"></div></div><div class="kpi-pct" id="pct-sudah">—</div></div>
+      <div class="kpi-card k-belum"><div class="kpi-icon">⏳</div><div class="kpi-label">Belum Terbit</div><div class="kpi-value" id="kpi-belum">—</div><div class="kpi-sub" id="kpi-belum-sub">—</div><div class="kpi-bar"><div class="kpi-bar-fill" id="bar-belum" style="width:0%"></div></div><div class="kpi-pct" id="pct-belum">—</div></div>
+      <div class="kpi-card k-luas"><div class="kpi-icon">🗺️</div><div class="kpi-label">Total Luas</div><div class="kpi-value" id="kpi-luas">—</div><div class="kpi-sub">Luas wilayah perairan terdata</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div><div class="kpi-pct" id="kpi-luas-sub">—</div></div>
     </div>
-  </aside>
-
-  <!-- ────────── MAIN ────────── -->
-  <div class="main">
-
-    <!-- TOP BAR -->
-    <header class="topbar">
-      <div>
-        <div class="topbar-title">Dashboard KKPRL</div>
-        <div class="topbar-breadcrumb">Kesesuaian Kegiatan Pemanfaatan <span>Ruang Laut</span></div>
-      </div>
-      <div class="topbar-right">
-        <div class="topbar-date">📅 22 Mei 2026</div>
-        <div class="topbar-badge">
-          <div class="live-dot"></div>
-          Data Aktif
-        </div>
-      </div>
-    </header>
-
-    <!-- ══════════════════════════════════
-         PAGE: RINGKASAN (OVERVIEW)
-    ══════════════════════════════════ -->
-    <section class="page active" id="page-overview">
-
-      <!-- HERO -->
-      <div class="hero">
-        <div class="hero-inner">
-          <div class="hero-text">
-            <h1>Kesesuaian Kegiatan Pemanfaatan Ruang Laut</h1>
-            <p>Rekapitulasi data KKPRL yang diterbitkan oleh Kementerian Kelautan dan Perikanan Republik Indonesia — mencakup seluruh wilayah perairan nasional.</p>
-            <div class="hero-pills">
-              <span class="pill">🇮🇩 Nasional</span>
-              <span class="pill">🗺️ 34 Provinsi</span>
-              <span class="pill accent">✅ 3.022 Terbit</span>
-              <span class="pill">⏳ 653 Proses</span>
-            </div>
-          </div>
-          <div class="hero-stats">
-            <div class="hero-stat">
-              <div class="hero-stat hs-num">3.675</div>
-              <div class="hero-stat hs-lbl">Total KKPRL</div>
-            </div>
-            <div class="hero-divider"></div>
-            <div class="hero-stat">
-              <div class="hs-num teal">82,2%</div>
-              <div class="hs-lbl">Sudah Terbit</div>
-            </div>
-            <div class="hero-divider"></div>
-            <div class="hero-stat">
-              <div class="hs-num gold">148K ha</div>
-              <div class="hs-lbl">Total Luas</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI CARDS -->
-      <div class="kpi-grid">
-        <div class="kpi-card k-total">
-          <div class="kpi-icon">🌊</div>
-          <div class="kpi-label">Total KKPRL</div>
-          <div class="kpi-value">3.675</div>
-          <div class="kpi-sub">Seluruh perizinan ruang laut</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div>
-          <div class="kpi-pct">100% dari total nasional</div>
-        </div>
-        <div class="kpi-card k-sudah">
-          <div class="kpi-icon">✅</div>
-          <div class="kpi-label">Sudah Terbit</div>
-          <div class="kpi-value">3.022</div>
-          <div class="kpi-sub">147.826 ha luas perairan</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-sudah" style="width:0%"></div></div>
-          <div class="kpi-pct" id="pct-sudah">82,2% dari total KKPRL</div>
-        </div>
-        <div class="kpi-card k-belum">
-          <div class="kpi-icon">⏳</div>
-          <div class="kpi-label">Belum Terbit</div>
-          <div class="kpi-value">653</div>
-          <div class="kpi-sub">681 ha luas dalam proses</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-belum" style="width:0%"></div></div>
-          <div class="kpi-pct" id="pct-belum">17,8% dari total KKPRL</div>
-        </div>
-        <div class="kpi-card k-luas">
-          <div class="kpi-icon">🗺️</div>
-          <div class="kpi-label">Total Luas</div>
-          <div class="kpi-value">148.507 <span class="kpi-unit">ha</span></div>
-          <div class="kpi-sub">Luas wilayah perairan terdata</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div>
-          <div class="kpi-pct">Setara ±1.485 km²</div>
-        </div>
-      </div>
-
-      <!-- ROW 1: Donut + Jenis + Kategori -->
-      <div class="sec-head"><div><div class="sec-title">Distribusi Status &amp; Jenis KKPRL</div><div class="sec-sub">Komposisi penerbitan berdasarkan status, jenis, dan kategori kegiatan</div></div></div>
-      <div class="chart-grid-3" style="margin-bottom:24px">
-
-        <div class="chart-card">
-          <div class="chart-card-title">Status Penerbitan</div>
-          <div class="chart-card-sub">Sudah Terbit vs Belum Terbit</div>
-          <div class="legend">
-            <div class="legend-item"><span class="legend-dot" style="background:#00bfa5"></span>Sudah Terbit (3.022)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#e6a817"></span>Belum Terbit (653)</div>
-          </div>
-          <div class="canvas-wrap donut-wrap" style="height:210px">
-            <canvas id="cDonut" role="img" aria-label="Donut chart: 82.2% Sudah Terbit, 17.8% Belum Terbit">82.2% Sudah Terbit, 17.8% Belum Terbit</canvas>
-            <div class="donut-center">
-              <div class="dc-num">3.675</div>
-              <div class="dc-lbl">Total</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-card-title">Jenis KKPRL</div>
-          <div class="chart-card-sub">Konfirmasi vs Persetujuan</div>
-          <div class="legend">
-            <div class="legend-item"><span class="legend-dot" style="background:#1e88e5"></span>Persetujuan (2.608)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#6a1b9a"></span>Konfirmasi (414)</div>
-          </div>
-          <div class="canvas-wrap donut-wrap" style="height:210px">
-            <canvas id="cJenis" role="img" aria-label="Donut chart jenis: Persetujuan 2608, Konfirmasi 414">Persetujuan 2.608, Konfirmasi 414</canvas>
-            <div class="donut-center">
-              <div class="dc-num" style="font-size:22px">86%</div>
-              <div class="dc-lbl">Persetujuan</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-card-title">Kategori Kegiatan</div>
-          <div class="chart-card-sub">Berusaha vs Non-Berusaha</div>
-          <div class="legend">
-            <div class="legend-item"><span class="legend-dot" style="background:#0d4a8a"></span>Berusaha (2.518)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#00796b"></span>Non-Berusaha (504)</div>
-          </div>
-          <div class="canvas-wrap donut-wrap" style="height:210px">
-            <canvas id="cKat" role="img" aria-label="Donut chart kategori: Berusaha 2518, Non-Berusaha 504">Berusaha 2.518, Non-Berusaha 504</canvas>
-            <div class="donut-center">
-              <div class="dc-num" style="font-size:22px">83%</div>
-              <div class="dc-lbl">Berusaha</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ROW 2: Trend + Province Bars -->
-      <div class="sec-head"><div><div class="sec-title">Tren Penerbitan &amp; Distribusi Wilayah</div><div class="sec-sub">Perkembangan tahunan dan sebaran KKPRL per provinsi</div></div></div>
-      <div class="chart-grid-2" style="margin-bottom:24px">
-
-        <div class="chart-card">
-          <div class="chart-card-title">Tren Penerbitan Per Tahun (2019–2026)</div>
-          <div class="chart-card-sub">Jumlah KKPRL yang diterbitkan setiap tahun</div>
-          <div class="canvas-wrap" style="height:220px">
-            <canvas id="cYear" role="img" aria-label="Bar chart tren penerbitan per tahun 2019-2026">2019:4, 2020:10, 2021:85, 2022:333, 2023:745, 2024:895, 2025:721, 2026:214</canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-card-title">Top 15 Provinsi — Jumlah KKPRL</div>
-          <div class="chart-card-sub">
-            <span style="display:inline-flex;gap:12px">
-              <span><span style="display:inline-block;width:10px;height:10px;background:#00bfa5;border-radius:2px;margin-right:4px"></span>Sudah</span>
-              <span><span style="display:inline-block;width:10px;height:10px;background:#e6a817;border-radius:2px;margin-right:4px"></span>Belum</span>
-            </span>
-          </div>
-          <div class="prov-scroll" id="provBars"></div>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ══════════════════════════════════
-         PAGE: ANALITIK
-    ══════════════════════════════════ -->
-    <section class="page" id="page-analytics">
-
-      <div class="sec-head" style="margin-bottom:20px">
-        <div><div class="sec-title">Analitik KKPRL</div><div class="sec-sub">Analisis mendalam terhadap data perizinan ruang laut nasional</div></div>
-      </div>
-
-      <div class="analytics-stats">
-        <div class="astat"><div class="al">Rasio Terbit</div><div class="av">82,2%</div><div class="as">Sudah dari total</div></div>
-        <div class="astat"><div class="al">Rata-rata Luas/KKPRL</div><div class="av">48,9 ha</div><div class="as">KKPRL terbit</div></div>
-        <div class="astat"><div class="al">Tahun Paling Aktif</div><div class="av">2024</div><div class="as">895 penerbitan</div></div>
-        <div class="astat"><div class="al">Provinsi Terbanyak</div><div class="av">Jawa Tengah</div><div class="as">730 KKPRL</div></div>
-        <div class="astat"><div class="al">Pertumbuhan YoY</div><div class="av">+20%</div><div class="as">2023 → 2024</div></div>
-        <div class="astat"><div class="al">Luas Terbesar</div><div class="av">147.826 ha</div><div class="as">Sudah terbit</div></div>
-      </div>
-
-      <!-- Stacked Bar -->
-      <div class="chart-card" style="margin-bottom:20px">
-        <div class="chart-card-title">Perbandingan Status KKPRL per Provinsi (Top 15)</div>
-        <div class="chart-card-sub">Perbandingan jumlah KKPRL Sudah Terbit vs Belum Terbit tiap provinsi</div>
-        <div class="legend">
-          <div class="legend-item"><span class="legend-dot" style="background:#00bfa5"></span>Sudah Terbit</div>
-          <div class="legend-item"><span class="legend-dot" style="background:#e6a817"></span>Belum Terbit</div>
-        </div>
-        <div class="canvas-wrap" style="height:320px">
-          <canvas id="cProvStacked" role="img" aria-label="Stacked bar chart status per provinsi">Perbandingan status per provinsi</canvas>
-        </div>
-      </div>
-
-      <div class="chart-grid-2">
-        <div class="chart-card">
-          <div class="chart-card-title">Kumulatif Penerbitan KKPRL</div>
-          <div class="chart-card-sub">Akumulasi penerbitan dari 2019 hingga 2026</div>
-          <div class="canvas-wrap" style="height:200px">
-            <canvas id="cCumul" role="img" aria-label="Line chart kumulatif penerbitan">Kumulatif 2019-2026</canvas>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">Perbandingan Luas Perairan (ha)</div>
-          <div class="chart-card-sub">Total luas antara KKPRL Sudah vs Belum Terbit</div>
-          <div class="canvas-wrap" style="height:200px">
-            <canvas id="cLuas" role="img" aria-label="Bar chart luas perairan">Sudah 147826ha, Belum 681ha</canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="chart-grid-2">
-        <div class="chart-card">
-          <div class="chart-card-title">Distribusi Jenis per Status</div>
-          <div class="chart-card-sub">Persetujuan &amp; Konfirmasi pada KKPRL Sudah Terbit</div>
-          <div class="canvas-wrap" style="height:220px">
-            <canvas id="cJenisBar" role="img" aria-label="Bar chart distribusi jenis">Jenis per status</canvas>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">Kategori Kegiatan — Porsi Luas (ha)</div>
-          <div class="chart-card-sub">Perbandingan luas berdasarkan kategori KKPRL</div>
-          <div class="canvas-wrap" style="height:220px">
-            <canvas id="cKatLuas" role="img" aria-label="Doughnut chart kategori luas">Luas per kategori</canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- INDIKASI KEGIATAN BELUM TERBIT -->
-      <div class="sec-head" style="margin-bottom:14px;margin-top:8px">
-        <div>
-          <div class="sec-title">Indikasi Kegiatan — Belum Terbit</div>
-          <div class="sec-sub">Klasifikasi 653 data KKPRL Belum Terbit berdasarkan 14 indikasi kegiatan pemanfaatan ruang laut</div>
-        </div>
-      </div>
-
-      <!-- Summary pills -->
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px" id="indikasiPills"></div>
-
-      <!-- Horizontal bar chart -->
-      <div class="chart-card" style="margin-bottom:20px">
-        <div class="chart-card-title">Distribusi Indikasi Kegiatan (Belum Terbit)</div>
-        <div class="chart-card-sub">Jumlah KKPRL per jenis kegiatan yang belum diterbitkan sertifikatnya</div>
-        <div class="canvas-wrap" style="height:360px">
-          <canvas id="cIndikasi" role="img" aria-label="Bar chart indikasi kegiatan belum terbit">Distribusi indikasi kegiatan</canvas>
-        </div>
-      </div>
-
-      <!-- Detail table by indikasi -->
+    <div class="sec-head"><div><div class="sec-title">Distribusi Status &amp; Jenis KKPRL</div><div class="sec-sub">Komposisi penerbitan berdasarkan status, jenis, dan kategori kegiatan</div></div></div>
+    <div class="chart-grid-3" style="margin-bottom:24px">
       <div class="chart-card">
-        <div class="chart-card-title">Rincian Indikasi Kegiatan Belum Terbit</div>
-        <div class="chart-card-sub">Data lengkap per jenis indikasi kegiatan beserta provinsi terdampak</div>
-        <div style="overflow-x:auto;margin-top:12px">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="background:var(--navy)">
-                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;width:32px">No</th>
-                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Indikasi Kegiatan</th>
-                <th style="padding:10px 14px;text-align:center;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Jumlah</th>
-                <th style="padding:10px 14px;text-align:center;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">%</th>
-                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Provinsi Utama</th>
-                <th style="padding:10px 14px;text-align:left;color:rgba(255,255,255,.85);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px">Proporsi</th>
-              </tr>
-            </thead>
-            <tbody id="indikasiTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
-
-    <!-- ══════════════════════════════════
-         PAGE: DATA TABEL
-    ══════════════════════════════════ -->
-    <section class="page" id="page-table">
-
-      <div class="sec-head" style="margin-bottom:16px">
-        <div><div class="sec-title">Data Tabel KKPRL</div><div class="sec-sub">Seluruh 3.675 data perizinan ruang laut dengan fitur filter dan pencarian</div></div>
-      </div>
-
-      <div class="filter-bar">
-        <div class="filter-group">
-          <label>🔍 Cari</label>
-          <input type="text" id="searchInput" placeholder="No. KKPRL, nama, kegiatan..." oninput="applyFilters()">
-        </div>
-        <div class="filter-group">
-          <label>Provinsi</label>
-          <select id="provFilter" onchange="applyFilters()"><option value="">Semua Provinsi</option></select>
-        </div>
-        <div class="filter-group">
-          <label>Status</label>
-          <select id="statusFilter" onchange="applyFilters()">
-            <option value="">Semua Status</option>
-            <option value="Sudah Terbit">Sudah Terbit</option>
-            <option value="Belum Terbit">Belum Terbit</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Jenis</label>
-          <select id="jenisFilter" onchange="applyFilters()">
-            <option value="">Semua Jenis</option>
-            <option value="PERSETUJUAN">Persetujuan</option>
-            <option value="KONFIRMASI">Konfirmasi</option>
-          </select>
-        </div>
-        <div class="filter-group" id="indikasiFilterGroup">
-          <label>Indikasi Kegiatan <span style="font-size:9px;background:#fff8e1;color:#b57900;border:1px solid #e6a81744;border-radius:4px;padding:1px 5px;font-weight:700;vertical-align:middle">Belum Terbit</span></label>
-          <select id="indikasiFilter" onchange="applyFilters()" style="min-width:220px">
-            <option value="">Semua Indikasi</option>
-            <option value="Permukiman/Perkantoran/Real Estate/Industri Niaga">1. Permukiman/Perkantoran/Real Estate/Industri Niaga</option>
-            <option value="Dermaga/Jetty/Terminal Khusus/TUKS">2. Dermaga/Jetty/Terminal Khusus/TUKS</option>
-            <option value="Hotel/Resort/Restoran/Pariwisata">3. Hotel/Resort/Restoran/Pariwisata</option>
-            <option value="Instalasi Perikanan/ALSE">4. Instalasi Perikanan/ALSE</option>
-            <option value="Jembatan">5. Jembatan</option>
-            <option value="Landasan Pacu">6. Landasan Pacu</option>
-            <option value="Pengaman Pantai">7. Pengaman Pantai</option>
-            <option value="Timbunan Lahan">8. Timbunan Lahan</option>
-            <option value="Budidaya Rumput Laut">9. Budidaya Rumput Laut</option>
-            <option value="Budidaya KJA">10. Budidaya KJA</option>
-            <option value="Budidaya Mutiara">11. Budidaya Mutiara</option>
-            <option value="Budidaya Lainnya">12. Budidaya Lainnya</option>
-            <option value="Alat Tangkap Menetap (Bagan/Rumpon/dll)">13. Alat Tangkap Menetap (Bagan/Rumpon/dll)</option>
-            <option value="Pertambangan">14. Pertambangan</option>
-          </select>
-        </div>
-        <button class="filter-reset" onclick="resetFilters()">↺ Reset</button>
-        <div class="filter-count-pill" id="filterCount">Memuat...</div>
-      </div>
-
-      <div class="table-card">
-        <div class="tbl-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:44px">#</th>
-                <th onclick="sortBy('no_kkprl')">No. KKPRL <span class="sort-arrow">▲</span></th>
-                <th onclick="sortBy('nama_subj')">Pemohon / Subjek <span class="sort-arrow">▲</span></th>
-                <th>Kegiatan</th>
-                <th onclick="sortBy('provinsi')">Provinsi <span class="sort-arrow">▲</span></th>
-                <th onclick="sortBy('jenis')">Jenis <span class="sort-arrow">▲</span></th>
-                <th>Kategori</th>
-                <th onclick="sortBy('status')">Status <span class="sort-arrow">▲</span></th>
-                <th onclick="sortBy('terbit')">Tgl. Terbit <span class="sort-arrow">▲</span></th>
-                <th onclick="sortBy('luas_ha')" style="text-align:right">Luas (ha) <span class="sort-arrow">▲</span></th>
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <tr><td colspan="10" class="empty-state">Memuat data...</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="tbl-footer">
-          <span id="pageInfo">-</span>
-          <div class="pg-controls">
-            <button class="pg-btn" id="btnFirst" onclick="goPage(1)" title="Pertama">«</button>
-            <button class="pg-btn" id="btnPrev"  onclick="prevPage()" title="Sebelumnya">‹</button>
-            <span class="pg-info" id="pgInfo2">-</span>
-            <button class="pg-btn" id="btnNext"  onclick="nextPage()" title="Berikutnya">›</button>
-            <button class="pg-btn" id="btnLast"  onclick="goLastPage()" title="Terakhir">»</button>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-
-    <!-- ══════════════════════════════════
-         PAGE: TENTANG KKPRL
-    ══════════════════════════════════ -->
-    <section class="page" id="page-about">
-      <div class="hero">
-        <div class="hero-inner">
-          <div class="hero-text">
-            <h1>Tentang KKPRL</h1>
-            <p>Kesesuaian Kegiatan Pemanfaatan Ruang Laut — Instrumen perizinan berbasis tata ruang laut nasional.</p>
-          </div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div class="chart-card">
-          <div class="chart-card-title">Apa itu KKPRL?</div>
-          <div class="chart-card-sub">Definisi dan landasan hukum</div>
-          <p style="font-size:13px;color:var(--text2);line-height:1.75;margin-top:8px">
-            <strong>KKPRL</strong> (Kesesuaian Kegiatan Pemanfaatan Ruang Laut) adalah dokumen persetujuan yang diberikan kepada pelaku usaha atau pemerintah yang hendak memanfaatkan ruang laut sesuai dengan Rencana Tata Ruang Laut Nasional (RTRLN) dan Rencana Zonasi Wilayah Pesisir dan Pulau-pulau Kecil (RZWP3K).<br><br>
-            Dasar hukum: <strong>UU No. 11 Tahun 2020 tentang Cipta Kerja</strong> dan <strong>PP No. 21 Tahun 2021</strong> tentang Penyelenggaraan Penataan Ruang.
-          </p>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">Jenis KKPRL</div>
-          <div class="chart-card-sub">Dua jenis utama perizinan ruang laut</div>
-          <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-            <div style="background:#e8f0fb;border-radius:10px;padding:14px">
-              <div style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:4px">✔ Persetujuan KKPRL</div>
-              <div style="font-size:12px;color:#2a4a7a;line-height:1.6">Untuk kegiatan yang bersifat berusaha — memerlukan kesesuaian dengan rencana zonasi. Dikeluarkan oleh Menteri KKP.</div>
-            </div>
-            <div style="background:#f3e5f5;border-radius:10px;padding:14px">
-              <div style="font-size:13px;font-weight:700;color:#6a1b9a;margin-bottom:4px">📋 Konfirmasi KKPRL</div>
-              <div style="font-size:12px;color:#4a2a7a;line-height:1.6">Untuk kegiatan non-berusaha — proyek pemerintah, infrastruktur publik. Berupa konfirmasi kesesuaian tata ruang.</div>
-            </div>
-          </div>
-        </div>
+        <div class="chart-card-title">Status Penerbitan</div>
+        <div class="chart-card-sub">Sudah Terbit vs Belum Terbit</div>
+        <div class="legend"><div class="legend-item"><span class="legend-dot" style="background:#00bfa5"></span>Sudah Terbit</div><div class="legend-item"><span class="legend-dot" style="background:#e6a817"></span>Belum Terbit</div></div>
+        <div class="canvas-wrap donut-wrap" style="height:210px"><canvas id="cDonut"></canvas><div class="donut-center"><div class="dc-num" id="dc-total">—</div><div class="dc-lbl">Total</div></div></div>
       </div>
       <div class="chart-card">
-        <div class="chart-card-title">Alur Proses KKPRL</div>
-        <div class="chart-card-sub">Dari permohonan hingga penerbitan</div>
-        <div style="display:flex;gap:0;margin-top:16px;flex-wrap:wrap">
-          <div style="flex:1;min-width:120px;text-align:center;padding:12px">
-            <div style="width:44px;height:44px;background:#e8f0fb;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">📝</div>
-            <div style="font-size:12px;font-weight:700;color:var(--navy)">Permohonan</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Online via OSS / PTSP KKP</div>
+        <div class="chart-card-title">Jenis KKPRL</div>
+        <div class="chart-card-sub">Konfirmasi vs Persetujuan</div>
+        <div class="legend"><div class="legend-item"><span class="legend-dot" style="background:#1e88e5"></span>Persetujuan</div><div class="legend-item"><span class="legend-dot" style="background:#6a1b9a"></span>Konfirmasi</div></div>
+        <div class="canvas-wrap donut-wrap" style="height:210px"><canvas id="cJenis"></canvas><div class="donut-center"><div class="dc-num" id="dc-jenis-pct" style="font-size:22px">—</div><div class="dc-lbl">Persetujuan</div></div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Kategori Kegiatan</div>
+        <div class="chart-card-sub">Berusaha vs Non-Berusaha</div>
+        <div class="legend"><div class="legend-item"><span class="legend-dot" style="background:#0d4a8a"></span>Berusaha</div><div class="legend-item"><span class="legend-dot" style="background:#00796b"></span>Non-Berusaha</div></div>
+        <div class="canvas-wrap donut-wrap" style="height:210px"><canvas id="cKat"></canvas><div class="donut-center"><div class="dc-num" id="dc-kat-pct" style="font-size:22px">—</div><div class="dc-lbl">Berusaha</div></div></div>
+      </div>
+    </div>
+    <div class="sec-head"><div><div class="sec-title">Tren Penerbitan &amp; Distribusi Wilayah</div><div class="sec-sub">Perkembangan tahunan dan sebaran KKPRL per provinsi</div></div></div>
+    <div class="chart-grid-2" style="margin-bottom:24px">
+      <div class="chart-card"><div class="chart-card-title">Tren Penerbitan Per Tahun</div><div class="chart-card-sub">Jumlah KKPRL yang diterbitkan setiap tahun</div><div class="canvas-wrap" style="height:220px"><canvas id="cYear"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Top 15 Provinsi — Jumlah KKPRL</div><div class="chart-card-sub"><span style="display:inline-flex;gap:12px"><span><span style="display:inline-block;width:10px;height:10px;background:#00bfa5;border-radius:2px;margin-right:4px"></span>Sudah</span><span><span style="display:inline-block;width:10px;height:10px;background:#e6a817;border-radius:2px;margin-right:4px"></span>Belum</span></span></div><div class="prov-scroll" id="provBars"></div></div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS -->
+  <section class="page" id="page-analytics">
+    <div class="sec-head" style="margin-bottom:20px"><div><div class="sec-title">Analitik KKPRL</div><div class="sec-sub">Analisis mendalam terhadap data perizinan ruang laut nasional</div></div></div>
+    <div class="analytics-stats" id="analytics-stats"></div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="chart-card-title">Perbandingan Status KKPRL per Provinsi (Top 15)</div>
+      <div class="chart-card-sub">Perbandingan jumlah KKPRL Sudah Terbit vs Belum Terbit tiap provinsi</div>
+      <div class="legend"><div class="legend-item"><span class="legend-dot" style="background:#00bfa5"></span>Sudah Terbit</div><div class="legend-item"><span class="legend-dot" style="background:#e6a817"></span>Belum Terbit</div></div>
+      <div class="canvas-wrap" style="height:320px"><canvas id="cProvStacked"></canvas></div>
+    </div>
+    <div class="chart-grid-2">
+      <div class="chart-card"><div class="chart-card-title">Kumulatif Penerbitan KKPRL</div><div class="chart-card-sub">Akumulasi penerbitan dari 2019 hingga kini</div><div class="canvas-wrap" style="height:200px"><canvas id="cCumul"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Perbandingan Luas Perairan (ha)</div><div class="chart-card-sub">Total luas antara KKPRL Sudah vs Belum Terbit</div><div class="canvas-wrap" style="height:200px"><canvas id="cLuas"></canvas></div></div>
+    </div>
+    <div class="chart-grid-2">
+      <div class="chart-card"><div class="chart-card-title">Distribusi Jenis per Status</div><div class="chart-card-sub">Persetujuan &amp; Konfirmasi KKPRL Sudah Terbit</div><div class="canvas-wrap" style="height:220px"><canvas id="cJenisBar"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Kategori Kegiatan — Porsi Luas (ha)</div><div class="chart-card-sub">Perbandingan luas berdasarkan kategori KKPRL</div><div class="canvas-wrap" style="height:220px"><canvas id="cKatLuas"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="page" id="page-map">
+    <div class="map-layout">
+      <div class="map-sidebar">
+        <div class="map-sidebar-header">Layer &amp; Filter</div>
+        <div class="map-legend">
+          <div class="map-legend-row"><div class="map-legend-swatch" style="background:rgba(0,191,165,.7);border:2px solid #00796b"></div> <span>Sudah Terbit (<span id="map-count-sudah">—</span>)</span></div>
+          <div class="map-legend-row"><div class="map-legend-swatch" style="background:rgba(230,168,23,.7);border:2px solid #b57900"></div> <span>Belum Terbit (<span id="map-count-belum">—</span>)</span></div>
+        </div>
+        <div class="map-filters">
+          <div>
+            <label>Tampilkan</label>
+            <select id="map-status-filter" onchange="mapFilterChange()">
+              <option value="all">Semua Status</option>
+              <option value="sudah">Sudah Terbit</option>
+              <option value="belum">Belum Terbit</option>
+            </select>
           </div>
-          <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
-          <div style="flex:1;min-width:120px;text-align:center;padding:12px">
-            <div style="width:44px;height:44px;background:#e0f5f1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">🔍</div>
-            <div style="font-size:12px;font-weight:700;color:var(--navy)">Verifikasi Dokumen</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Tim teknis DJPRL</div>
+          <div>
+            <label>Provinsi</label>
+            <select id="map-prov-filter" onchange="mapFilterChange()"><option value="">Semua Provinsi</option></select>
           </div>
-          <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
-          <div style="flex:1;min-width:120px;text-align:center;padding:12px">
-            <div style="width:44px;height:44px;background:#fff8e1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">🗺️</div>
-            <div style="font-size:12px;font-weight:700;color:var(--navy)">Verifikasi Lapangan</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Cek kesesuaian RZWP3K</div>
-          </div>
-          <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
-          <div style="flex:1;min-width:120px;text-align:center;padding:12px">
-            <div style="width:44px;height:44px;background:#f3e5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">✅</div>
-            <div style="font-size:12px;font-weight:700;color:var(--navy)">Penerbitan KKPRL</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Ditandatangani Menteri KKP</div>
+          <div>
+            <label>🔍 Cari</label>
+            <input type="text" id="map-search" placeholder="Nama, kegiatan..." oninput="mapFilterChange()">
           </div>
         </div>
+        <div class="map-meta"><span><strong id="map-feat-count">—</strong> fitur</span><button onclick="mapFitAll()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;color:var(--text2)">↔ Fit</button></div>
+        <div class="map-feat-list" id="map-feat-list"></div>
       </div>
+      <div class="map-panel"><div id="leaflet-map"></div></div>
+    </div>
+  </section>
 
-      <div class="page-footer">
-        <span>© 2026 Kementerian Kelautan dan Perikanan Republik Indonesia</span>
-        <span>Loka Penataan Ruang Laut Serang — <a href="https://kkp.go.id" target="_blank">kkp.go.id</a></span>
+  <!-- TABLE -->
+  <section class="page" id="page-table">
+    <div class="sec-head" style="margin-bottom:16px"><div><div class="sec-title">Data Tabel KKPRL</div><div class="sec-sub" id="table-sub">Seluruh data perizinan ruang laut dengan fitur filter dan pencarian</div></div></div>
+    <div class="filter-bar">
+      <div class="filter-group"><label>🔍 Cari</label><input type="text" id="searchInput" placeholder="No. KKPRL, nama, kegiatan..." oninput="applyFilters()"></div>
+      <div class="filter-group"><label>Provinsi</label><select id="provFilter" onchange="applyFilters()"><option value="">Semua Provinsi</option></select></div>
+      <div class="filter-group"><label>Status</label><select id="statusFilter" onchange="applyFilters()"><option value="">Semua Status</option><option value="SUDAH_TERBIT">Sudah Terbit</option><option value="BELUM_TERBIT">Belum Terbit</option></select></div>
+      <div class="filter-group"><label>Jenis</label><select id="jenisFilter" onchange="applyFilters()"><option value="">Semua Jenis</option><option value="PERSETUJUAN">Persetujuan</option><option value="KONFIRMASI">Konfirmasi</option></select></div>
+      <button class="filter-reset" onclick="resetFilters()">↺ Reset</button>
+      <div class="filter-count-pill" id="filterCount">Memuat...</div>
+    </div>
+    <div class="table-card">
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr>
+            <th style="width:44px">#</th>
+            <th onclick="sortBy('no_kkprl')">No. KKPRL <span class="sort-arrow">▲</span></th>
+            <th onclick="sortBy('nama_subj')">Pemohon / Subjek <span class="sort-arrow">▲</span></th>
+            <th>Kegiatan</th>
+            <th onclick="sortBy('provinsi')">Provinsi <span class="sort-arrow">▲</span></th>
+            <th onclick="sortBy('jenis')">Jenis <span class="sort-arrow">▲</span></th>
+            <th>Kategori</th>
+            <th onclick="sortBy('status')">Status <span class="sort-arrow">▲</span></th>
+            <th onclick="sortBy('terbit')">Tgl. Terbit <span class="sort-arrow">▲</span></th>
+            <th onclick="sortBy('luas_ha')" style="text-align:right">Luas (ha) <span class="sort-arrow">▲</span></th>
+          </tr></thead>
+          <tbody id="tableBody"><tr><td colspan="10" class="empty-state">Memuat data...</td></tr></tbody>
+        </table>
       </div>
-    </section>
+      <div class="tbl-footer">
+        <span id="pageInfo">-</span>
+        <div class="pg-controls">
+          <button class="pg-btn" id="btnFirst" onclick="goPage(1)">«</button>
+          <button class="pg-btn" id="btnPrev" onclick="prevPage()">‹</button>
+          <span class="pg-info" id="pgInfo2">-</span>
+          <button class="pg-btn" id="btnNext" onclick="nextPage()">›</button>
+          <button class="pg-btn" id="btnLast" onclick="goLastPage()">»</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  </div><!-- /main -->
+  <!-- ABOUT -->
+  <section class="page" id="page-about">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h1>Tentang KKPRL</h1>
+          <p>Kesesuaian Kegiatan Pemanfaatan Ruang Laut — Instrumen perizinan berbasis tata ruang laut nasional.</p>
+        </div>
+      </div>
+    </div>
+    <div class="about-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">Apa itu KKPRL?</div>
+        <div class="chart-card-sub">Definisi dan landasan hukum</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.75;margin-top:8px">
+          <strong>KKPRL</strong> (Kesesuaian Kegiatan Pemanfaatan Ruang Laut) adalah dokumen persetujuan yang diberikan kepada pelaku usaha atau pemerintah yang hendak memanfaatkan ruang laut sesuai dengan Rencana Tata Ruang Laut Nasional (RTRLN) dan Rencana Zonasi Wilayah Pesisir dan Pulau-pulau Kecil (RZWP3K).<br><br>
+          Dasar hukum: <strong>UU No. 11 Tahun 2020 tentang Cipta Kerja</strong> dan <strong>PP No. 21 Tahun 2021</strong> tentang Penyelenggaraan Penataan Ruang.
+        </p>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Jenis KKPRL</div>
+        <div class="chart-card-sub">Dua jenis utama perizinan ruang laut</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+          <div style="background:#e8f0fb;border-radius:10px;padding:14px"><div style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:4px">✔ Persetujuan KKPRL</div><div style="font-size:12px;color:#2a4a7a;line-height:1.6">Untuk kegiatan yang bersifat berusaha — memerlukan kesesuaian dengan rencana zonasi. Dikeluarkan oleh Menteri KKP.</div></div>
+          <div style="background:#f3e5f5;border-radius:10px;padding:14px"><div style="font-size:13px;font-weight:700;color:#6a1b9a;margin-bottom:4px">📋 Konfirmasi KKPRL</div><div style="font-size:12px;color:#4a2a7a;line-height:1.6">Untuk kegiatan non-berusaha — proyek pemerintah, infrastruktur publik. Berupa konfirmasi kesesuaian tata ruang.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Alur Proses KKPRL</div>
+      <div class="chart-card-sub">Dari permohonan hingga penerbitan</div>
+      <div style="display:flex;gap:0;margin-top:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px;text-align:center;padding:12px"><div style="width:44px;height:44px;background:#e8f0fb;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">📝</div><div style="font-size:12px;font-weight:700;color:var(--navy)">Permohonan</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Online via OSS / PTSP KKP</div></div>
+        <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
+        <div style="flex:1;min-width:120px;text-align:center;padding:12px"><div style="width:44px;height:44px;background:#e0f5f1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">🔍</div><div style="font-size:12px;font-weight:700;color:var(--navy)">Verifikasi Dokumen</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Tim teknis DJPRL</div></div>
+        <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
+        <div style="flex:1;min-width:120px;text-align:center;padding:12px"><div style="width:44px;height:44px;background:#fff8e1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">🗺️</div><div style="font-size:12px;font-weight:700;color:var(--navy)">Verifikasi Lapangan</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Cek kesesuaian RZWP3K</div></div>
+        <div style="display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:18px">→</div>
+        <div style="flex:1;min-width:120px;text-align:center;padding:12px"><div style="width:44px;height:44px;background:#f3e5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">✅</div><div style="font-size:12px;font-weight:700;color:var(--navy)">Penerbitan KKPRL</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Ditandatangani Menteri KKP</div></div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <span>© 2026 Kementerian Kelautan dan Perikanan Republik Indonesia</span>
+      <span>Direktorat Jenderal Pengelolaan Ruang Laut — <a href="https://kkp.go.id" target="_blank">kkp.go.id</a></span>
+    </div>
+  </section>
+
+</div><!-- /main -->
 </div><!-- /layout -->
 
-
-<!-- ─────── EXTERNAL DATA ─────── -->
 <script src="data.js"></script>
-
-<!-- ─────── APP SCRIPT ─────── -->
 <script>
-/* ──────── STATE ──────── */
-var allRecords = (typeof KKPRL_RECORDS !== 'undefined') ? KKPRL_RECORDS : [];
-var agg        = (typeof KKPRL_AGG !== 'undefined') ? KKPRL_AGG : {};
-var filtered   = [];
-var currentPage = 1;
-var pageSize    = 20;
-var sortField   = null;
-var sortDir     = 1;
-var chartsBuilt = {};
+'use strict';
 
-/* ──────── NAV ──────── */
+/* ═══════════════════════════════════════════════════════════
+   DATA PROCESSING — convert data.js GeoJSON → flat records
+═══════════════════════════════════════════════════════════ */
+var allRecords = [];
+var agg = {};
+var _chartsBuilt = {};
+var _mapInitialized = false;
+var _leafletMap = null;
+var _mapLayers = { sudah: null, belum: null };
+var _mapFiltered = [];
+
+function initData() {
+  if (typeof data === 'undefined') {
+    console.error('data.js not loaded');
+    return;
+  }
+
+  // Normalize a GeoJSON feature to a flat record
+  function norm(feat, status) {
+    var p = feat.properties || {};
+    var rec = {
+      status: status,
+      // shared normalized keys
+      no_kkprl:  p.NO_KKPRL  || null,
+      nama_subj: p.NAMA_SUBJ || null,
+      jenis:     p.JENIS     || null,
+      kategori:  p.KATEGORI  || null,
+      kegiatan:  p.KEGIATAN  || null,
+      provinsi:  p.PROVINSI  || null,
+      luas_ha:   parseFloat(p.LUAS_HA) || 0,
+      terbit:    p.TERBIT ? String(p.TERBIT).slice(0, 10) : (p.THN_IDEN || null),
+      _raw: p,
+      _geom: feat.geometry
+    };
+    return rec;
+  }
+
+  (data.sudahTerbit || []).forEach(function(f) { allRecords.push(norm(f, 'SUDAH_TERBIT')); });
+  (data.belumTerbit || []).forEach(function(f) { allRecords.push(norm(f, 'BELUM_TERBIT')); });
+
+  // Build aggregates
+  var nSudah = allRecords.filter(function(r) { return r.status === 'SUDAH_TERBIT'; }).length;
+  var nBelum = allRecords.filter(function(r) { return r.status === 'BELUM_TERBIT'; }).length;
+  var nTotal = allRecords.length;
+
+  var luasSudah = 0, luasBelum = 0;
+  allRecords.forEach(function(r) {
+    if (r.status === 'SUDAH_TERBIT') luasSudah += r.luas_ha;
+    else luasBelum += r.luas_ha;
+  });
+
+  // Province counts
+  var provMap = {};
+  allRecords.forEach(function(r) {
+    if (!r.provinsi) return;
+    if (!provMap[r.provinsi]) provMap[r.provinsi] = { sudah: 0, belum: 0 };
+    if (r.status === 'SUDAH_TERBIT') provMap[r.provinsi].sudah++;
+    else provMap[r.provinsi].belum++;
+  });
+  var provinces = Object.keys(provMap).map(function(k) {
+    return { name: k, sudah: provMap[k].sudah, belum: provMap[k].belum, total: provMap[k].sudah + provMap[k].belum };
+  }).sort(function(a, b) { return b.total - a.total; });
+
+  // Year trend (sudah terbit only, from TERBIT field)
+  var yearMap = {};
+  allRecords.forEach(function(r) {
+    if (r.status !== 'SUDAH_TERBIT' || !r.terbit) return;
+    var yr = String(r.terbit).slice(0, 4);
+    if (yr.length === 4 && !isNaN(yr)) yearMap[yr] = (yearMap[yr] || 0) + 1;
+  });
+  var years = Object.keys(yearMap).sort();
+  var yearTrend = years.map(function(y) { return { year: y, count: yearMap[y] }; });
+
+  // Cumulative
+  var cum = 0;
+  var cumulative = yearTrend.map(function(y) { cum += y.count; return cum; });
+
+  // Jenis counts (sudah only, has JENIS)
+  var jenisCounts = {};
+  allRecords.forEach(function(r) {
+    if (!r.jenis) return;
+    jenisCounts[r.jenis] = (jenisCounts[r.jenis] || 0) + 1;
+  });
+
+  // Kategori counts
+  var katCounts = {};
+  allRecords.forEach(function(r) {
+    if (!r.kategori) return;
+    katCounts[r.kategori] = (katCounts[r.kategori] || 0) + 1;
+  });
+
+  // Luas per kategori (sudah only)
+  var luasPerKat = {};
+  allRecords.forEach(function(r) {
+    if (r.status !== 'SUDAH_TERBIT' || !r.kategori) return;
+    luasPerKat[r.kategori] = (luasPerKat[r.kategori] || 0) + r.luas_ha;
+  });
+
+  agg = {
+    nTotal: nTotal, nSudah: nSudah, nBelum: nBelum,
+    luasSudah: luasSudah, luasBelum: luasBelum, luasTotal: luasSudah + luasBelum,
+    provinces: provinces,
+    yearTrend: yearTrend,
+    cumulative: cumulative,
+    jenisCounts: jenisCounts,
+    katCounts: katCounts,
+    luasPerKat: luasPerKat
+  };
+}
+
+/* ═════════════ NAVIGATION ═════════════ */
 function showPage(id, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.getElementById('page-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
 
-  if (id === 'analytics' && !chartsBuilt.analytics) { buildAnalyticsCharts(); chartsBuilt.analytics = true; }
-  if (id === 'table' && !chartsBuilt.table) { initTable(); chartsBuilt.table = true; }
+  if (id === 'analytics' && !_chartsBuilt.analytics) { buildAnalyticsCharts(); _chartsBuilt.analytics = true; }
+  if (id === 'table'    && !_chartsBuilt.table)    { initTable(); _chartsBuilt.table = true; }
+  if (id === 'map'      && !_mapInitialized)        { initMap(); _mapInitialized = true; }
 }
 
-/* ──────── ANIMATE KPI BARS ──────── */
-function animateBars() {
+/* ═════════════ HERO / KPI INIT ═════════════ */
+function initOverview() {
+  var a = agg;
+  var pct = a.nTotal ? (a.nSudah / a.nTotal * 100).toFixed(1) : 0;
+  var pctB = (100 - pct).toFixed(1);
+  var luasK = (a.luasTotal / 1000).toFixed(0) + 'k';
+
+  // date
+  var d = new Date(); var months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  document.getElementById('topbar-date').textContent = '📅 ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+
+  // hero
+  document.getElementById('hs-total').textContent = a.nTotal.toLocaleString('id-ID');
+  document.getElementById('hs-pct').textContent = pct + '%';
+  document.getElementById('hs-luas').textContent = luasK + ' ha';
+  document.getElementById('pill-prov').textContent = '🗺️ ' + a.provinces.length + ' Provinsi';
+  document.getElementById('pill-sudah').textContent = '✅ ' + a.nSudah.toLocaleString('id-ID') + ' Terbit';
+  document.getElementById('pill-belum').textContent = '⏳ ' + a.nBelum.toLocaleString('id-ID') + ' Proses';
+  document.getElementById('dc-total').textContent = a.nTotal.toLocaleString('id-ID');
+  document.getElementById('nav-total-badge').textContent = a.nTotal.toLocaleString('id-ID');
+
+  // KPI
+  document.getElementById('kpi-total').textContent = a.nTotal.toLocaleString('id-ID');
+  document.getElementById('kpi-sudah').textContent = a.nSudah.toLocaleString('id-ID');
+  document.getElementById('kpi-sudah-sub').textContent = a.luasSudah.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ha luas perairan';
+  document.getElementById('pct-sudah').textContent = pct + '% dari total KKPRL';
+  document.getElementById('kpi-belum').textContent = a.nBelum.toLocaleString('id-ID');
+  document.getElementById('kpi-belum-sub').textContent = a.luasBelum.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ha luas dalam proses';
+  document.getElementById('pct-belum').textContent = pctB + '% dari total KKPRL';
+  document.getElementById('kpi-luas').innerHTML = Math.round(a.luasTotal).toLocaleString('id-ID') + ' <span class="kpi-unit">ha</span>';
+  document.getElementById('kpi-luas-sub').textContent = 'Setara ±' + (a.luasTotal / 100).toFixed(0) + ' km²';
+
+  var jPers = a.jenisCounts['PERSETUJUAN'] || 0;
+  var jKonf = a.jenisCounts['KONFIRMASI'] || 0;
+  var jTotal = jPers + jKonf;
+  document.getElementById('dc-jenis-pct').textContent = jTotal ? Math.round(jPers/jTotal*100) + '%' : '—';
+  var kBer = a.katCounts['BERUSAHA'] || 0;
+  var kNon = a.katCounts['NONBERUSAHA'] || 0;
+  var kTotal = kBer + kNon;
+  document.getElementById('dc-kat-pct').textContent = kTotal ? Math.round(kBer/kTotal*100) + '%' : '—';
+
+  // animate bars
   setTimeout(function() {
-    document.getElementById('bar-sudah').style.width = '82.2%';
-    document.getElementById('bar-belum').style.width = '17.8%';
+    document.getElementById('bar-sudah').style.width = pct + '%';
+    document.getElementById('bar-belum').style.width = pctB + '%';
   }, 400);
+
+  buildOverviewCharts();
+  buildProvBars();
 }
 
-/* ──────── PROVINCE BARS ──────── */
+/* ═════════════ OVERVIEW CHARTS ═════════════ */
+function buildOverviewCharts() {
+  var a = agg;
+  var jPers = a.jenisCounts['PERSETUJUAN'] || 0;
+  var jKonf = a.jenisCounts['KONFIRMASI'] || 0;
+  var kBer = a.katCounts['BERUSAHA'] || 0;
+  var kNon = a.katCounts['NONBERUSAHA'] || 0;
+
+  new Chart(document.getElementById('cDonut'), {
+    type:'doughnut',
+    data:{ labels:['Sudah Terbit','Belum Terbit'], datasets:[{ data:[a.nSudah,a.nBelum], backgroundColor:['#00bfa5','#e6a817'], borderWidth:3, borderColor:'#fff', hoverOffset:8 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw.toLocaleString('id-ID')+' ('+((c.raw/a.nTotal)*100).toFixed(1)+'%)';}}} } }
+  });
+  new Chart(document.getElementById('cJenis'), {
+    type:'doughnut',
+    data:{ labels:['Persetujuan','Konfirmasi'], datasets:[{ data:[jPers,jKonf], backgroundColor:['#1e88e5','#6a1b9a'], borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  new Chart(document.getElementById('cKat'), {
+    type:'doughnut',
+    data:{ labels:['Berusaha','Non-Berusaha'], datasets:[{ data:[kBer,kNon], backgroundColor:['#0d4a8a','#00796b'], borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  var yrLabels = a.yearTrend.map(function(y){ return y.year; });
+  var yrData   = a.yearTrend.map(function(y){ return y.count; });
+  var cols = ['#b3cfe8','#90b8d8','#6da0c8','#4a89b8','#2772a8','#0d4a8a','#1a6880','#00796b','#009e80','#00bfa5'];
+  new Chart(document.getElementById('cYear'), {
+    type:'bar',
+    data:{ labels:yrLabels, datasets:[{ label:'Jumlah KKPRL', data:yrData, backgroundColor:yrData.map(function(_,i){ return cols[i%cols.length]; }), borderRadius:6, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{grid:{display:false}}, y:{grid:{color:'#eef3f8'}} } }
+  });
+}
+
 function buildProvBars() {
   var wrap = document.getElementById('provBars');
-  if (!wrap || !agg.top_provinces) return;
-  var top = agg.top_provinces.slice(0, 15);
+  var top = agg.provinces.slice(0, 15);
+  if (!top.length) { wrap.innerHTML = '<div class="empty-state">Tidak ada data</div>'; return; }
   var max = top[0].total;
   wrap.innerHTML = top.map(function(p) {
     var pct = (p.total / max * 100).toFixed(1);
     var sPct = p.total > 0 ? (p.sudah / p.total * 100).toFixed(0) : 0;
-    var bPct = 100 - sPct;
-    var nm = p.name.replace('KEPULAUAN ', 'KEP. ').replace('NUSA TENGGARA ', 'NT');
-    return '<div class="prov-row">' +
-      '<div class="prov-name" title="' + p.name + '">' + nm + '</div>' +
-      '<div class="prov-bar-bg"><div class="prov-bar-fill" style="width:' + pct + '%;background:linear-gradient(90deg,#00bfa5 ' + sPct + '%,#e6a817 ' + sPct + '%)"></div></div>' +
-      '<div class="prov-count">' + p.total + '</div>' +
-      '</div>';
+    var nm = p.name.replace('KEPULAUAN ','KEP. ').replace('NUSA TENGGARA ','NT ');
+    return '<div class="prov-row"><div class="prov-name" title="'+p.name+'">'+nm+'</div><div class="prov-bar-bg"><div class="prov-bar-fill" style="width:'+pct+'%;background:linear-gradient(90deg,#00bfa5 '+sPct+'%,#e6a817 '+sPct+'%)"></div></div><div class="prov-count">'+p.total+'</div></div>';
   }).join('');
 }
 
-/* ──────── OVERVIEW CHARTS ──────── */
-function buildOverviewCharts() {
-  // Donut - Status
-  new Chart(document.getElementById('cDonut'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Sudah Terbit', 'Belum Terbit'],
-      datasets: [{
-        data: [3022, 653],
-        backgroundColor: ['#00bfa5', '#e6a817'],
-        borderWidth: 3,
-        borderColor: '#fff',
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '72%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: function(c) { return c.label + ': ' + c.raw.toLocaleString('id-ID') + ' (' + (c.raw/3675*100).toFixed(1) + '%)'; } } }
-      }
-    }
-  });
-
-  // Donut - Jenis
-  new Chart(document.getElementById('cJenis'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Persetujuan', 'Konfirmasi'],
-      datasets: [{ data: [2608, 414], backgroundColor: ['#1e88e5', '#6a1b9a'], borderWidth: 3, borderColor: '#fff', hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.label + ': ' + c.raw.toLocaleString('id-ID'); } } } }
-    }
-  });
-
-  // Donut - Kategori
-  new Chart(document.getElementById('cKat'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Berusaha', 'Non-Berusaha'],
-      datasets: [{ data: [2518, 504], backgroundColor: ['#0d4a8a', '#00796b'], borderWidth: 3, borderColor: '#fff', hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.label + ': ' + c.raw.toLocaleString('id-ID'); } } } }
-    }
-  });
-
-  // Bar - Year Trend
-  var yrs = agg.year_trend || [];
-  new Chart(document.getElementById('cYear'), {
-    type: 'bar',
-    data: {
-      labels: yrs.map(function(y) { return y.year; }),
-      datasets: [{
-        label: 'Jumlah KKPRL',
-        data: yrs.map(function(y) { return y.count; }),
-        backgroundColor: yrs.map(function(y, i) {
-          var cols = ['#b3cfe8','#90b8d8','#6da0c8','#4a89b8','#2772a8','#0d4a8a','#1a6880','#00796b'];
-          return cols[i] || '#0d4a8a';
-        }),
-        borderRadius: 6,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false },
-        tooltip: { callbacks: { label: function(c) { return 'Terbit: ' + c.raw.toLocaleString('id-ID'); } } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 12 } } },
-        y: { grid: { color: '#eef3f8' }, ticks: { font: { size: 11 } } }
-      }
-    }
-  });
-}
-
-/* ──────── ANALYTICS CHARTS ──────── */
+/* ═════════════ ANALYTICS CHARTS ═════════════ */
 function buildAnalyticsCharts() {
-  // Stacked Bar — Province
-  var top = (agg.top_provinces || []).slice(0, 15);
+  var a = agg;
+
+  // Analytics stats
+  var top1 = a.provinces[0] || {};
+  var topYr = a.yearTrend.reduce(function(best, y){ return y.count > (best.count||0) ? y : best; }, {});
+  var avgLuas = a.nSudah ? (a.luasSudah / a.nSudah).toFixed(1) : 0;
+  document.getElementById('analytics-stats').innerHTML = [
+    ['Rasio Terbit', a.nTotal ? (a.nSudah/a.nTotal*100).toFixed(1)+'%' : '—', 'Sudah dari total'],
+    ['Rata-rata Luas/KKPRL', avgLuas+' ha', 'KKPRL terbit'],
+    ['Tahun Paling Aktif', topYr.year||'—', (topYr.count||0)+' penerbitan'],
+    ['Provinsi Terbanyak', top1.name ? (top1.name.split(' ').slice(0,2).join(' ')) : '—', (top1.total||0)+' KKPRL'],
+    ['Sudah Terbit', a.nSudah.toLocaleString('id-ID'), 'data'],
+    ['Luas Sudah Terbit', Math.round(a.luasSudah).toLocaleString('id-ID')+' ha', 'Terbit']
+  ].map(function(s){ return '<div class="astat"><div class="al">'+s[0]+'</div><div class="av">'+s[1]+'</div><div class="as">'+s[2]+'</div></div>'; }).join('');
+
+  var top15 = a.provinces.slice(0,15);
+  var pLabels = top15.map(function(p){ return p.name.replace('KEPULAUAN ','KEP. ').replace('NUSA TENGGARA ','NT '); });
   new Chart(document.getElementById('cProvStacked'), {
-    type: 'bar',
-    data: {
-      labels: top.map(function(p) { return p.name.replace('KEPULAUAN ','KEP. ').replace('NUSA TENGGARA ','NT'); }),
-      datasets: [
-        { label: 'Sudah Terbit', data: top.map(function(p) { return p.sudah; }), backgroundColor: '#00bfa5', stack: 's', borderRadius: 3 },
-        { label: 'Belum Terbit', data: top.map(function(p) { return p.belum; }), backgroundColor: '#e6a817', stack: 's', borderRadius: 3 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { stacked: true, ticks: { font: { size: 10 }, maxRotation: 35 } },
-        y: { stacked: true, ticks: { font: { size: 11 } } }
-      }
-    }
+    type:'bar',
+    data:{ labels:pLabels, datasets:[
+      { label:'Sudah Terbit', data:top15.map(function(p){return p.sudah;}), backgroundColor:'#00bfa5', stack:'s', borderRadius:3 },
+      { label:'Belum Terbit', data:top15.map(function(p){return p.belum;}), backgroundColor:'#e6a817', stack:'s', borderRadius:3 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{stacked:true,ticks:{font:{size:10},maxRotation:35}}, y:{stacked:true} } }
   });
-
-  // Cumulative Line
-  var cumData = agg.cumulative || [];
-  var yrs = (agg.year_trend || []).map(function(y) { return y.year; });
   new Chart(document.getElementById('cCumul'), {
-    type: 'line',
-    data: {
-      labels: yrs,
-      datasets: [{
-        label: 'Kumulatif', data: cumData,
-        borderColor: '#0d4a8a', backgroundColor: 'rgba(13,74,138,.1)',
-        fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#0d4a8a',
-        pointHoverRadius: 7
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false } }, y: { ticks: { font: { size: 11 } } } }
-    }
+    type:'line',
+    data:{ labels:a.yearTrend.map(function(y){return y.year;}), datasets:[{ label:'Kumulatif', data:a.cumulative, borderColor:'#0d4a8a', backgroundColor:'rgba(13,74,138,.1)', fill:true, tension:.4, pointRadius:5, pointBackgroundColor:'#0d4a8a' }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}} } }
   });
-
-  // Luas Bar
   new Chart(document.getElementById('cLuas'), {
-    type: 'bar',
-    data: {
-      labels: ['Sudah Terbit', 'Belum Terbit'],
-      datasets: [{
-        data: [147825.88, 681.0],
-        backgroundColor: ['#00bfa5', '#e6a817'],
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { ticks: { callback: function(v) { return v >= 1000 ? (v/1000).toFixed(0)+'k' : v; }, font: { size: 11 } } }
-      }
-    }
+    type:'bar',
+    data:{ labels:['Sudah Terbit','Belum Terbit'], datasets:[{ data:[Math.round(a.luasSudah),Math.round(a.luasBelum)], backgroundColor:['#00bfa5','#e6a817'], borderRadius:8 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{callback:function(v){ return v>=1000?(v/1000).toFixed(0)+'k':v; }}} } }
   });
-
-  // Jenis Bar
+  var jPers = a.jenisCounts['PERSETUJUAN']||0, jKonf=a.jenisCounts['KONFIRMASI']||0;
   new Chart(document.getElementById('cJenisBar'), {
-    type: 'bar',
-    data: {
-      labels: ['Persetujuan', 'Konfirmasi'],
-      datasets: [{
-        label: 'Jumlah',
-        data: [2608, 414],
-        backgroundColor: ['#1e88e5', '#6a1b9a'],
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { ticks: { font: { size: 11 } } }, x: { grid: { display: false } } }
-    }
+    type:'bar',
+    data:{ labels:['Persetujuan','Konfirmasi'], datasets:[{ data:[jPers,jKonf], backgroundColor:['#1e88e5','#6a1b9a'], borderRadius:8 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}} } }
   });
-
-  // Kategori Luas — computed dynamically from records
-  var luasBerusaha = 0, luasNon = 0;
-  allRecords.forEach(function(r) {
-    if (r.status === 'Sudah Terbit') {
-      if (r.kategori === 'BERUSAHA') luasBerusaha += (r.luas_ha || 0);
-      else luasNon += (r.luas_ha || 0);
-    }
-  });
+  var katEntries = Object.entries(a.luasPerKat);
   new Chart(document.getElementById('cKatLuas'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Berusaha', 'Non-Berusaha'],
-      datasets: [{
-        data: [Math.round(luasBerusaha), Math.round(luasNon)],
-        backgroundColor: ['#0d4a8a', '#00796b'],
-        borderWidth: 3, borderColor: '#fff', hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: function(c) { return c.label + ': ' + c.raw.toLocaleString('id-ID') + ' ha'; } } }
-      }
-    }
+    type:'doughnut',
+    data:{ labels:katEntries.map(function(e){return e[0];}), datasets:[{ data:katEntries.map(function(e){return Math.round(e[1]);}), backgroundColor:['#0d4a8a','#00796b','#1e88e5','#e6a817'], borderWidth:3, borderColor:'#fff', hoverOffset:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw.toLocaleString('id-ID')+' ha';}}} } }
   });
-
-  // ── INDIKASI KEGIATAN BELUM TERBIT ──
-  buildIndikasiChart();
 }
 
-/* ──────── INDIKASI KEGIATAN ──────── */
-var INDIKASI_CATS = [
-  { no:1,  name: "Permukiman/Perkantoran/Real Estate/Industri Niaga", short:"Permukiman/\nReal Estate", kw:["PERMUKIMAN","PERKANTORAN","REAL ESTATE","INDUSTRI NIAGA","INSUDTRI NIAGA","INSUATRI NIAGA"] },
-  { no:2,  name: "Dermaga/Jetty/Terminal Khusus/TUKS", short:"Dermaga/Jetty/\nTUKS", kw:["DERMAGA","JETTY","TERMINAL KHUSUS","TUKS"] },
-  { no:3,  name: "Hotel/Resort/Restoran/Pariwisata", short:"Hotel/Resort/\nPariwisata", kw:["HOTEL","RESORT","RESTORAN","PARIWISATA"] },
-  { no:4,  name: "Instalasi Perikanan/ALSE", short:"Instalasi\nPerikanan/ALSE", kw:["INSTALASI PERIKANAN","ALSE"] },
-  { no:5,  name: "Jembatan", short:"Jembatan", kw:["JEMBATAN"] },
-  { no:6,  name: "Landasan Pacu", short:"Landasan Pacu", kw:["LANDASAN PACU"] },
-  { no:7,  name: "Pengaman Pantai", short:"Pengaman Pantai", kw:["PENGAMAN PANTAI"] },
-  { no:8,  name: "Timbunan Lahan", short:"Timbunan Lahan", kw:["TIMBUNAN LAHAN"] },
-  { no:9,  name: "Budidaya Rumput Laut", short:"Budidaya\nRumput Laut", kw:["BUDIDAYA RUMPUT LAUT"] },
-  { no:10, name: "Budidaya KJA", short:"Budidaya KJA", kw:["BUDIDAYA KJA"] },
-  { no:11, name: "Budidaya Mutiara", short:"Budidaya Mutiara", kw:["BUDIDAYA MUTIARA"] },
-  { no:12, name: "Budidaya Lainnya", short:"Budidaya Lainnya", kw:["BUDIDAYA LAINNYA","BUDIDAYA"] },
-  { no:13, name: "Alat Tangkap Menetap (Bagan/Rumpon/dll)", short:"Alat Tangkap\nMenetap", kw:["ALAT TANGKAP MENETAP","BAGAN","RUMPON"] },
-  { no:14, name: "Pertambangan", short:"Pertambangan", kw:["PERTAMBANGAN","TAMBANG"] },
-];
+/* ═════════════ TABLE ═════════════ */
+var tFiltered=[], tCurrent=1, tPageSize=20, tSortField=null, tSortDir=1;
 
-function categorizeKegiatan(k) {
-  var u = (k || '').toString().trim().toUpperCase();
-  if (!u) return "Lainnya";
-  for (var i = 0; i < INDIKASI_CATS.length; i++) {
-    for (var j = 0; j < INDIKASI_CATS[i].kw.length; j++) {
-      if (u.indexOf(INDIKASI_CATS[i].kw[j]) >= 0) return INDIKASI_CATS[i].name;
-    }
-  }
-  return "Lainnya";
-}
-
-function buildIndikasiChart() {
-  // Count per category from live records
-  var belumRecs = allRecords.filter(function(r) { return r.status === 'Belum Terbit'; });
-  var counts = {};
-  var provBycat = {};
-  INDIKASI_CATS.forEach(function(c) { counts[c.name] = 0; provBycat[c.name] = {}; });
-  counts['Lainnya'] = 0; provBycat['Lainnya'] = {};
-
-  belumRecs.forEach(function(r) {
-    var cat = categorizeKegiatan(r.kegiatan);
-    counts[cat] = (counts[cat] || 0) + 1;
-    if (r.provinsi) {
-      provBycat[cat] = provBycat[cat] || {};
-      provBycat[cat][r.provinsi] = (provBycat[cat][r.provinsi] || 0) + 1;
-    }
-  });
-
-  // Build sorted list (by count desc, only non-zero)
-  var sorted = INDIKASI_CATS.map(function(c) {
-    return { no: c.no, name: c.name, short: c.short, count: counts[c.name] || 0, provs: provBycat[c.name] || {} };
-  }).filter(function(x) { return x.count > 0; });
-  if (counts['Lainnya'] > 0) sorted.push({ no:'-', name:'Lainnya', short:'Lainnya', count: counts['Lainnya'], provs: provBycat['Lainnya'] || {} });
-  sorted.sort(function(a,b) { return b.count - a.count; });
-
-  var total = belumRecs.length;
-  var COLORS = [
-    '#1565c0','#00796b','#e6a817','#6a1b9a','#c62828','#00838f',
-    '#558b2f','#4527a0','#ad1457','#00695c','#f57f17','#283593',
-    '#0d4a8a','#bf360c','#37474f'
-  ];
-
-  // ── Horizontal bar chart ──
-  new Chart(document.getElementById('cIndikasi'), {
-    type: 'bar',
-    data: {
-      labels: sorted.map(function(x) { return x.short; }),
-      datasets: [{
-        label: 'Jumlah KKPRL',
-        data: sorted.map(function(x) { return x.count; }),
-        backgroundColor: sorted.map(function(x, i) { return COLORS[i % COLORS.length]; }),
-        borderRadius: 5,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: function(items) { return sorted[items[0].dataIndex].name; },
-            label: function(c) { return ' Jumlah: ' + c.raw + ' (' + (c.raw/total*100).toFixed(1) + '%)'; }
-          }
-        }
-      },
-      scales: {
-        x: { grid: { color: '#eef3f8' }, ticks: { font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 11 }, crossAlign: 'far' } }
-      }
-    }
-  });
-
-  // ── Summary pills ──
-  var pillWrap = document.getElementById('indikasiPills');
-  if (pillWrap) {
-    pillWrap.innerHTML = sorted.slice(0,6).map(function(x, i) {
-      return '<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--border);border-radius:10px;padding:8px 14px;box-shadow:var(--shadow-sm)">' +
-        '<span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[i % COLORS.length] + ';flex-shrink:0;display:inline-block"></span>' +
-        '<span style="font-size:12px;font-weight:600;color:var(--navy)">' + x.count + '</span>' +
-        '<span style="font-size:11.5px;color:var(--muted)">' + x.name.replace(/\n/g,' ') + '</span>' +
-        '</div>';
-    }).join('');
-  }
-
-  // ── Detail table ──
-  var tbody = document.getElementById('indikasiTableBody');
-  if (tbody) {
-    tbody.innerHTML = sorted.map(function(x, i) {
-      var pct = (x.count / total * 100).toFixed(1);
-      // Top province
-      var provEntries = Object.entries(x.provs).sort(function(a,b){return b[1]-a[1];});
-      var topProv = provEntries.length > 0 ? provEntries[0][0].replace('KEPULAUAN ','KEP. ') : '—';
-      if (provEntries.length > 1) topProv += ' +' + (provEntries.length - 1);
-      // Bar proportion
-      var barPct = (x.count / sorted[0].count * 100).toFixed(0);
-      return '<tr style="border-bottom:1px solid var(--bg)">' +
-        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);font-weight:600">' + x.no + '</td>' +
-        '<td style="padding:10px 14px;font-size:12.5px;font-weight:600;color:var(--navy)">' + x.name.replace(/\n/g,' ') + '</td>' +
-        '<td style="padding:10px 14px;text-align:center"><span style="background:' + COLORS[i%COLORS.length] + '22;color:' + COLORS[i%COLORS.length] + ';border:1px solid ' + COLORS[i%COLORS.length] + '44;border-radius:20px;padding:3px 12px;font-size:13px;font-weight:700">' + x.count + '</span></td>' +
-        '<td style="padding:10px 14px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)">' + pct + '%</td>' +
-        '<td style="padding:10px 14px;font-size:11.5px;color:var(--text2)">' + topProv + '</td>' +
-        '<td style="padding:10px 24px 10px 14px"><div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + barPct + '%;background:' + COLORS[i%COLORS.length] + ';border-radius:4px"></div></div></td>' +
-        '</tr>';
-    }).join('');
-  }
-}
-
-/* ──────── TABLE ──────── */
 function initTable() {
-  // Populate province filter
+  document.getElementById('table-sub').textContent = 'Seluruh '+allRecords.length.toLocaleString('id-ID')+' data perizinan ruang laut';
   var sel = document.getElementById('provFilter');
   var provs = {};
-  allRecords.forEach(function(r) { if (r.provinsi) provs[r.provinsi] = 1; });
-  Object.keys(provs).sort().forEach(function(p) {
-    var o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o);
-  });
-  filtered = allRecords.slice();
+  allRecords.forEach(function(r){ if(r.provinsi) provs[r.provinsi]=1; });
+  Object.keys(provs).sort().forEach(function(p){ var o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o); });
+  tFiltered = allRecords.slice();
   renderTable();
 }
 
 function applyFilters() {
-  var q        = (document.getElementById('searchInput') && document.getElementById('searchInput').value || '').toLowerCase();
-  var prov     = document.getElementById('provFilter') && document.getElementById('provFilter').value || '';
-  var status   = document.getElementById('statusFilter') && document.getElementById('statusFilter').value || '';
-  var jenis    = document.getElementById('jenisFilter') && document.getElementById('jenisFilter').value || '';
-  var indikasi = document.getElementById('indikasiFilter') && document.getElementById('indikasiFilter').value || '';
-
-  // If indikasi filter is active, force status = Belum Terbit automatically
-  if (indikasi) {
-    var statusEl = document.getElementById('statusFilter');
-    if (statusEl && statusEl.value !== 'Belum Terbit') {
-      statusEl.value = 'Belum Terbit';
-      status = 'Belum Terbit';
-    }
-  }
-
-  // Show/hide indikasi filter hint
-  var grp = document.getElementById('indikasiFilterGroup');
-  if (grp) grp.style.opacity = (status === '' || status === 'Belum Terbit') ? '1' : '0.35';
-
-  filtered = allRecords.filter(function(d) {
-    if (prov   && d.provinsi !== prov)   return false;
-    if (status && d.status   !== status) return false;
-    if (jenis  && d.jenis    !== jenis)  return false;
-    if (indikasi) {
-      // Only applies to Belum Terbit; categorize and match
-      if (d.status !== 'Belum Terbit') return false;
-      if (categorizeKegiatan(d.kegiatan) !== indikasi) return false;
-    }
+  var q = (document.getElementById('searchInput').value||'').toLowerCase();
+  var prov = document.getElementById('provFilter').value;
+  var status = document.getElementById('statusFilter').value;
+  var jenis = document.getElementById('jenisFilter').value;
+  tFiltered = allRecords.filter(function(r) {
+    if (prov   && r.provinsi !== prov)    return false;
+    if (status && r.status   !== status)  return false;
+    if (jenis  && r.jenis    !== jenis)   return false;
     if (q) {
-      var hay = ((d.no_kkprl||'') + ' ' + (d.nama_subj||'') + ' ' + (d.kegiatan||'') + ' ' + (d.provinsi||'')).toLowerCase();
+      var hay = ((r.no_kkprl||'')+' '+(r.nama_subj||'')+' '+(r.kegiatan||'')+' '+(r.provinsi||'')).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
-
-  if (sortField) {
-    filtered.sort(function(a, b) {
-      var av = a[sortField] || '', bv = b[sortField] || '';
-      if (typeof av === 'number') return (av - bv) * sortDir;
-      return av.localeCompare(bv) * sortDir;
+  if (tSortField) {
+    tFiltered.sort(function(a,b){
+      var av=a[tSortField]||'', bv=b[tSortField]||'';
+      if(typeof av==='number') return (av-bv)*tSortDir;
+      return String(av).localeCompare(String(bv))*tSortDir;
     });
   }
-
-  currentPage = 1;
-  renderTable();
+  tCurrent=1; renderTable();
 }
 
 function resetFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('provFilter').value = '';
-  document.getElementById('statusFilter').value = '';
-  document.getElementById('jenisFilter').value = '';
-  document.getElementById('indikasiFilter').value = '';
-  var grp = document.getElementById('indikasiFilterGroup');
-  if (grp) grp.style.opacity = '1';
-  sortField = null;
-  document.querySelectorAll('th').forEach(function(t) { t.classList.remove('sorted'); });
+  document.getElementById('searchInput').value='';
+  document.getElementById('provFilter').value='';
+  document.getElementById('statusFilter').value='';
+  document.getElementById('jenisFilter').value='';
+  tSortField=null; document.querySelectorAll('th').forEach(function(t){t.classList.remove('sorted');});
   applyFilters();
 }
 
 function sortBy(field) {
-  if (sortField === field) { sortDir *= -1; }
-  else { sortField = field; sortDir = 1; }
-  document.querySelectorAll('th').forEach(function(t) { t.classList.remove('sorted'); });
+  if(tSortField===field){tSortDir*=-1;} else{tSortField=field;tSortDir=1;}
+  document.querySelectorAll('th').forEach(function(t){t.classList.remove('sorted');});
   applyFilters();
 }
 
 function renderTable() {
   var tbody = document.getElementById('tableBody');
-  if (!tbody) return;
-  var start = (currentPage - 1) * pageSize;
-  var rows  = filtered.slice(start, start + pageSize);
-  var total = filtered.length;
-  var totalPages = Math.ceil(total / pageSize);
-
-  if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data yang cocok dengan filter yang dipilih.</td></tr>';
+  var start = (tCurrent-1)*tPageSize;
+  var rows  = tFiltered.slice(start, start+tPageSize);
+  var total = tFiltered.length;
+  var totalPages = Math.ceil(total/tPageSize)||1;
+  if (!rows.length) {
+    tbody.innerHTML='<tr><td colspan="10" class="empty-state">Tidak ada data yang cocok.</td></tr>';
   } else {
-    tbody.innerHTML = rows.map(function(d, i) {
-      var statusCls = d.status === 'Sudah Terbit' ? 'badge-sudah' : 'badge-belum';
-      var jenisCls  = d.jenis === 'PERSETUJUAN' ? 'badge-persetujuan' : d.jenis === 'KONFIRMASI' ? 'badge-konfirmasi' : 'badge-gray';
-      var katCls    = d.kategori === 'BERUSAHA' ? 'badge-berusaha' : d.kategori === 'NONBERUSAHA' ? 'badge-nonberusaha' : 'badge-gray';
-      var terbit    = d.terbit || (d.thn_iden ? d.thn_iden : '—');
-      var luas      = d.luas_ha ? d.luas_ha.toFixed(3) : '—';
-      return '<tr>' +
-        '<td class="td-idx">' + (start + i + 1) + '</td>' +
-        '<td class="td-mono">' + (d.no_kkprl || '—') + '</td>' +
-        '<td class="td-trunc" title="' + (d.nama_subj||'') + '">' + (d.nama_subj || '—') + '</td>' +
-        '<td class="td-trunc" title="' + (d.kegiatan||'') + '" style="max-width:240px">' + (d.kegiatan || '—') + '</td>' +
-        '<td style="font-size:12px">' + (d.provinsi || '—') + '</td>' +
-        '<td><span class="badge ' + jenisCls + '">' + (d.jenis || '—') + '</span></td>' +
-        '<td><span class="badge ' + katCls + '">' + (d.kategori || '—') + '</span></td>' +
-        '<td><span class="badge ' + statusCls + '">' + d.status + '</span></td>' +
-        '<td style="font-size:11.5px;color:var(--muted)">' + terbit + '</td>' +
-        '<td class="td-num" style="text-align:right">' + luas + '</td>' +
+    tbody.innerHTML = rows.map(function(r,i) {
+      var sCls  = r.status==='SUDAH_TERBIT'?'badge-sudah':'badge-belum';
+      var sLbl  = r.status==='SUDAH_TERBIT'?'Sudah Terbit':'Belum Terbit';
+      var jCls  = r.jenis==='PERSETUJUAN'?'badge-persetujuan':r.jenis==='KONFIRMASI'?'badge-konfirmasi':'badge-gray';
+      var kCls  = r.kategori==='BERUSAHA'?'badge-berusaha':r.kategori==='NONBERUSAHA'?'badge-nonberusaha':'badge-gray';
+      var luas  = r.luas_ha ? r.luas_ha.toFixed(3) : '—';
+      return '<tr>'+
+        '<td class="td-idx">'+(start+i+1)+'</td>'+
+        '<td class="td-mono">'+(r.no_kkprl||'—')+'</td>'+
+        '<td class="td-trunc" title="'+(r.nama_subj||'')+'">'+(r.nama_subj||'—')+'</td>'+
+        '<td class="td-trunc" style="max-width:240px" title="'+(r.kegiatan||'')+'">'+(r.kegiatan||'—')+'</td>'+
+        '<td style="font-size:12px">'+(r.provinsi||'—')+'</td>'+
+        '<td><span class="badge '+jCls+'">'+(r.jenis||'—')+'</span></td>'+
+        '<td><span class="badge '+kCls+'">'+(r.kategori||'—')+'</span></td>'+
+        '<td><span class="badge '+sCls+'">'+sLbl+'</span></td>'+
+        '<td style="font-size:11.5px;color:var(--muted)">'+(r.terbit||'—')+'</td>'+
+        '<td class="td-num" style="text-align:right">'+luas+'</td>'+
         '</tr>';
     }).join('');
   }
+  document.getElementById('pageInfo').innerHTML='Menampilkan <strong>'+Math.min(start+1,total)+'–'+Math.min(start+tPageSize,total)+'</strong> dari <strong>'+total.toLocaleString('id-ID')+'</strong> data';
+  document.getElementById('pgInfo2').textContent=tCurrent+' / '+totalPages;
+  document.getElementById('filterCount').textContent=total.toLocaleString('id-ID')+' hasil';
+  document.getElementById('btnFirst').disabled=tCurrent<=1;
+  document.getElementById('btnPrev').disabled=tCurrent<=1;
+  document.getElementById('btnNext').disabled=tCurrent>=totalPages;
+  document.getElementById('btnLast').disabled=tCurrent>=totalPages;
+}
+function prevPage(){if(tCurrent>1){tCurrent--;renderTable();}}
+function nextPage(){if(tCurrent<Math.ceil(tFiltered.length/tPageSize)){tCurrent++;renderTable();}}
+function goPage(n){tCurrent=n;renderTable();}
+function goLastPage(){tCurrent=Math.ceil(tFiltered.length/tPageSize)||1;renderTable();}
 
-  document.getElementById('pageInfo').innerHTML = 'Menampilkan <strong>' + Math.min(start+1,total) + '–' + Math.min(start+pageSize,total) + '</strong> dari <strong>' + total.toLocaleString('id-ID') + '</strong> data';
-  document.getElementById('pgInfo2').textContent = currentPage + ' / ' + totalPages;
-  document.getElementById('filterCount').textContent = total.toLocaleString('id-ID') + ' hasil';
+/* ═════════════ MAP ═════════════ */
+var _mapAllFeatures = []; // { rec, feat, marker }
 
-  document.getElementById('btnFirst').disabled = currentPage <= 1;
-  document.getElementById('btnPrev').disabled  = currentPage <= 1;
-  document.getElementById('btnNext').disabled  = currentPage >= totalPages;
-  document.getElementById('btnLast').disabled  = currentPage >= totalPages;
+function initMap() {
+  _leafletMap = L.map('leaflet-map').setView([-2.5, 118], 5);
+  L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    subdomains:['0','1','2','3'], attribution:'© Google', maxZoom:21
+  }).addTo(_leafletMap);
+
+  // Populate province filter
+  var sel = document.getElementById('map-prov-filter');
+  var provs = {};
+  allRecords.forEach(function(r){ if(r.provinsi) provs[r.provinsi]=1; });
+  Object.keys(provs).sort().forEach(function(p){ var o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o); });
+
+  document.getElementById('map-count-sudah').textContent = agg.nSudah.toLocaleString('id-ID');
+  document.getElementById('map-count-belum').textContent = agg.nBelum.toLocaleString('id-ID');
+
+  // Build all Leaflet layers
+  _mapLayers.sudah = L.layerGroup().addTo(_leafletMap);
+  _mapLayers.belum = L.layerGroup().addTo(_leafletMap);
+
+  allRecords.forEach(function(r, idx) {
+    if (!r._geom) return;
+    var isSudah = r.status === 'SUDAH_TERBIT';
+    var fillColor = isSudah ? '#00bfa5' : '#e6a817';
+    var strokeColor = isSudah ? '#00796b' : '#b57900';
+    var layer = L.geoJSON({ type:'Feature', geometry:r._geom, properties:{} }, {
+      style: { color:strokeColor, weight:1.5, fillColor:fillColor, fillOpacity:0.45, opacity:0.8 },
+      onEachFeature: function(f, l) {
+        l.on('click', function() { selectMapFeature(idx); });
+        var name = r.nama_subj || r.kegiatan || ('Feature #'+(idx+1));
+        l.bindPopup('<div style="font-size:12px;max-width:240px"><strong>'+(name)+'</strong><br>'+(r.provinsi||'')+'<br><span style="color:'+(isSudah?'#00796b':'#b57900')+';font-weight:600">'+(isSudah?'✅ Sudah Terbit':'⏳ Belum Terbit')+'</span>'+(r.luas_ha?'<br>Luas: '+r.luas_ha.toFixed(3)+' ha':'')+'</div>', {maxWidth:260});
+      }
+    });
+    _mapAllFeatures.push({ rec:r, idx:idx, layer:layer });
+    layer.addTo(isSudah ? _mapLayers.sudah : _mapLayers.belum);
+  });
+
+  _mapFiltered = _mapAllFeatures.slice();
+  renderMapList();
 }
 
-function prevPage()     { if (currentPage > 1) { currentPage--; renderTable(); } }
-function nextPage()     { if (currentPage < Math.ceil(filtered.length / pageSize)) { currentPage++; renderTable(); } }
-function goPage(n)      { currentPage = n; renderTable(); }
-function goLastPage()   { currentPage = Math.ceil(filtered.length / pageSize); renderTable(); }
+function mapFilterChange() {
+  var status = document.getElementById('map-status-filter').value;
+  var prov   = document.getElementById('map-prov-filter').value;
+  var q      = (document.getElementById('map-search').value||'').toLowerCase();
 
-/* ──────── INIT ──────── */
+  _mapFiltered = _mapAllFeatures.filter(function(item) {
+    var r = item.rec;
+    if (status==='sudah' && r.status!=='SUDAH_TERBIT') return false;
+    if (status==='belum' && r.status!=='BELUM_TERBIT') return false;
+    if (prov && r.provinsi!==prov) return false;
+    if (q) {
+      var hay = ((r.nama_subj||'')+' '+(r.kegiatan||'')+' '+(r.provinsi||'')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // toggle layer visibility
+  if (status==='sudah') { _leafletMap.addLayer(_mapLayers.sudah); _leafletMap.removeLayer(_mapLayers.belum); }
+  else if (status==='belum') { _leafletMap.removeLayer(_mapLayers.sudah); _leafletMap.addLayer(_mapLayers.belum); }
+  else { _leafletMap.addLayer(_mapLayers.sudah); _leafletMap.addLayer(_mapLayers.belum); }
+
+  renderMapList();
+}
+
+var _selectedMapIdx = null;
+function selectMapFeature(idx) {
+  _selectedMapIdx = idx;
+  var item = _mapAllFeatures[idx];
+  if (!item) return;
+  renderMapList();
+  try { var b = item.layer.getBounds(); if (b.isValid()) _leafletMap.fitBounds(b,{padding:[40,40],maxZoom:16}); } catch(e){}
+  // scroll list item
+  var el = document.querySelector('.map-feat-item[data-idx="'+idx+'"]');
+  if (el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function renderMapList() {
+  var list = document.getElementById('map-feat-list');
+  document.getElementById('map-feat-count').textContent = _mapFiltered.length.toLocaleString('id-ID');
+  var show = _mapFiltered.slice(0, 200); // cap list render
+  list.innerHTML = show.map(function(item, i) {
+    var r = item.rec;
+    var isSudah = r.status==='SUDAH_TERBIT';
+    var name = r.nama_subj || r.kegiatan;
+    var isActive = item.idx === _selectedMapIdx;
+    return '<div class="map-feat-item'+(isActive?' active':'')+'" data-idx="'+item.idx+'" onclick="selectMapFeature('+item.idx+')">'+
+      '<span class="map-feat-num">'+(i+1)+'</span>'+
+      '<div class="map-feat-dot" style="background:'+(isSudah?'#00bfa5':'#e6a817')+'"></div>'+
+      '<div class="map-feat-name'+(name?'':' unnamed')+'" title="'+(name||'')+'">'+( name||'(tanpa nama)')+'</div>'+
+      '<div class="map-feat-prov">'+(r.provinsi ? r.provinsi.split(' ').slice(0,2).join(' ') : '')+'</div>'+
+      '</div>';
+  }).join('');
+  if (_mapFiltered.length > 200) {
+    list.innerHTML += '<div style="text-align:center;padding:8px;font-size:11px;color:var(--muted)">+'+(_mapFiltered.length-200)+' lainnya — gunakan filter untuk mempersempit</div>';
+  }
+}
+
+function mapFitAll() {
+  if (!_leafletMap) return;
+  try {
+    var allLayers = L.layerGroup([_mapLayers.sudah, _mapLayers.belum]);
+    var bounds = L.geoJSON({ type:'FeatureCollection', features: _mapAllFeatures.map(function(i){ return {type:'Feature',geometry:i.rec._geom,properties:{}}; }) }).getBounds();
+    if (bounds.isValid()) _leafletMap.fitBounds(bounds, {padding:[30,30]});
+  } catch(e) { _leafletMap.setView([-2.5,118],5); }
+}
+
+/* ═════════════ BOOT ═════════════ */
 window.addEventListener('load', function() {
-  buildOverviewCharts();
-  buildProvBars();
-  animateBars();
+  initData();
+  initOverview();
 });
 </script>
 </body>
