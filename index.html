@@ -917,6 +917,7 @@ function mapFilterChange() {
   var prov   = document.getElementById('map-prov-filter').value;
   var q      = (document.getElementById('map-search').value||'').toLowerCase();
 
+  _mapListPage = 1;
   _mapFiltered = _mapAllFeatures.filter(function(item) {
     var r = item.rec;
     if (status==='sudah' && r.status!=='SUDAH_TERBIT') return false;
@@ -938,36 +939,63 @@ function mapFilterChange() {
 }
 
 var _selectedMapIdx = null;
+var _mapListPage = 1;
+var _mapListPageSize = 50;
+
 function selectMapFeature(idx) {
   _selectedMapIdx = idx;
   var item = _mapAllFeatures[idx];
   if (!item) return;
+  // jump to correct page in list
+  var pos = _mapFiltered.findIndex(function(i){ return i.idx === idx; });
+  if (pos >= 0) _mapListPage = Math.ceil((pos+1) / _mapListPageSize);
   renderMapList();
   try { var b = item.layer.getBounds(); if (b.isValid()) _leafletMap.fitBounds(b,{padding:[40,40],maxZoom:16}); } catch(e){}
-  // scroll list item
-  var el = document.querySelector('.map-feat-item[data-idx="'+idx+'"]');
-  if (el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+  setTimeout(function(){
+    var el = document.querySelector('.map-feat-item[data-idx="'+idx+'"]');
+    if (el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }, 50);
 }
 
 function renderMapList() {
   var list = document.getElementById('map-feat-list');
-  document.getElementById('map-feat-count').textContent = _mapFiltered.length.toLocaleString('id-ID');
-  var show = _mapFiltered.slice(0, 200); // cap list render
-  list.innerHTML = show.map(function(item, i) {
+  var total = _mapFiltered.length;
+  var totalPages = Math.ceil(total / _mapListPageSize) || 1;
+  if (_mapListPage > totalPages) _mapListPage = totalPages;
+  var start = (_mapListPage - 1) * _mapListPageSize;
+  var show  = _mapFiltered.slice(start, start + _mapListPageSize);
+
+  document.getElementById('map-feat-count').textContent = total.toLocaleString('id-ID');
+
+  var rows = show.map(function(item, i) {
     var r = item.rec;
-    var isSudah = r.status==='SUDAH_TERBIT';
+    var isSudah = r.status === 'SUDAH_TERBIT';
     var name = r.nama_subj || r.kegiatan;
     var isActive = item.idx === _selectedMapIdx;
     return '<div class="map-feat-item'+(isActive?' active':'')+'" data-idx="'+item.idx+'" onclick="selectMapFeature('+item.idx+')">'+
-      '<span class="map-feat-num">'+(i+1)+'</span>'+
+      '<span class="map-feat-num">'+(start+i+1)+'</span>'+
       '<div class="map-feat-dot" style="background:'+(isSudah?'#00bfa5':'#e6a817')+'"></div>'+
       '<div class="map-feat-name'+(name?'':' unnamed')+'" title="'+(name||'')+'">'+( name||'(tanpa nama)')+'</div>'+
       '<div class="map-feat-prov">'+(r.provinsi ? r.provinsi.split(' ').slice(0,2).join(' ') : '')+'</div>'+
       '</div>';
   }).join('');
-  if (_mapFiltered.length > 200) {
-    list.innerHTML += '<div style="text-align:center;padding:8px;font-size:11px;color:var(--muted)">+'+(_mapFiltered.length-200)+' lainnya — gunakan filter untuk mempersempit</div>';
-  }
+
+  // pagination controls
+  var pgBar = '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-top:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--muted);background:var(--bg)">'+
+    '<button onclick="mapListPage(-1)" '+((_mapListPage<=1)?'disabled':'')+' style="width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:var(--surface);cursor:pointer;font-size:13px;color:var(--text2)">‹</button>'+
+    '<span>'+_mapListPage+' / '+totalPages+'</span>'+
+    '<button onclick="mapListPage(1)" '+((_mapListPage>=totalPages)?'disabled':'')+' style="width:26px;height:26px;border:1px solid var(--border);border-radius:5px;background:var(--surface);cursor:pointer;font-size:13px;color:var(--text2)">›</button>'+
+    '</div>';
+
+  list.innerHTML = rows + pgBar;
+}
+
+function mapListPage(dir) {
+  var total = _mapFiltered.length;
+  var totalPages = Math.ceil(total / _mapListPageSize) || 1;
+  _mapListPage = Math.max(1, Math.min(totalPages, _mapListPage + dir));
+  renderMapList();
+  document.getElementById('map-feat-list').scrollTop = 0;
 }
 
 function mapFitAll() {
