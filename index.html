@@ -495,7 +495,9 @@ td{padding:11px 14px;font-size:12.5px;color:var(--text);vertical-align:middle}
 </div><!-- /main -->
 </div><!-- /layout -->
 
-<script src="data.js"></script>
+<script src="data1.js"></script>
+<script src="data2.js"></script>
+<script src="data3.js"></script>
 <script>
 'use strict';
 
@@ -511,8 +513,12 @@ var _mapLayers = { sudah: null, belum: null };
 var _mapFiltered = [];
 
 function initData() {
-  if (typeof data === 'undefined') {
-    console.error('data.js not loaded');
+  var sudahFeatures = (typeof sudahTerbit_1 !== 'undefined' ? sudahTerbit_1 : [])
+                    .concat(typeof sudahTerbit_2 !== 'undefined' ? sudahTerbit_2 : []);
+  var belumFeatures = typeof belumTerbit !== 'undefined' ? belumTerbit : [];
+
+  if (!sudahFeatures.length && !belumFeatures.length) {
+    console.error('data chunks not loaded');
     return;
   }
 
@@ -521,7 +527,6 @@ function initData() {
     var p = feat.properties || {};
     var rec = {
       status: status,
-      // shared normalized keys
       no_kkprl:  p.NO_KKPRL  || null,
       nama_subj: p.NAMA_SUBJ || null,
       jenis:     p.JENIS     || null,
@@ -536,8 +541,8 @@ function initData() {
     return rec;
   }
 
-  (data.sudahTerbit || []).forEach(function(f) { allRecords.push(norm(f, 'SUDAH_TERBIT')); });
-  (data.belumTerbit || []).forEach(function(f) { allRecords.push(norm(f, 'BELUM_TERBIT')); });
+  sudahFeatures.forEach(function(f) { allRecords.push(norm(f, 'SUDAH_TERBIT')); });
+  belumFeatures.forEach(function(f) { allRecords.push(norm(f, 'BELUM_TERBIT')); });
 
   // Build aggregates
   var nSudah = allRecords.filter(function(r) { return r.status === 'SUDAH_TERBIT'; }).length;
