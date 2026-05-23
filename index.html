@@ -398,6 +398,15 @@ td{padding:11px 14px;font-size:12.5px;color:var(--text);vertical-align:middle}
         </div>
         <div class="map-meta"><span><strong id="map-feat-count">—</strong> fitur</span><button onclick="mapFitAll()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;color:var(--text2)">↔ Fit</button></div>
         <div class="map-feat-list" id="map-feat-list"></div>
+        <div id="map-detail-panel" style="display:none;border-top:2px solid var(--sky);background:var(--bg);padding:12px 14px;flex-shrink:0;font-size:12px">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:4px;font-size:13px;line-height:1.3" id="mdp-name">—</div>
+          <div style="color:var(--muted);margin-bottom:8px;font-size:11px" id="mdp-meta">—</div>
+          <div style="display:flex;flex-direction:column;gap:4px" id="mdp-rows"></div>
+          <a id="mdp-gmaps" href="#" target="_blank" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:7px 12px;background:#e8f0fb;border:1px solid rgba(21,101,192,.2);border-radius:7px;color:#1565c0;font-weight:600;font-size:12px;text-decoration:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Buka di Google Maps
+          </a>
+        </div>
       </div>
       <div class="map-panel"><div id="leaflet-map"></div></div>
     </div>
@@ -942,10 +951,34 @@ var _selectedMapIdx = null;
 var _mapListPage = 1;
 var _mapListPageSize = 50;
 
+function _getDefaultStyle(rec) {
+  var isSudah = rec.status === 'SUDAH_TERBIT';
+  return { color: isSudah ? '#00796b' : '#b57900', weight: 1.5, fillColor: isSudah ? '#00bfa5' : '#e6a817', fillOpacity: 0.45, opacity: 0.8 };
+}
+
+function _applyHighlight(idx, highlight) {
+  var item = _mapAllFeatures[idx];
+  if (!item) return;
+  if (highlight) {
+    item.layer.setStyle({ color: '#ff3d00', weight: 3.5, fillColor: '#ff6d00', fillOpacity: 0.55, opacity: 1 });
+    item.layer.bringToFront();
+  } else {
+    item.layer.setStyle(_getDefaultStyle(item.rec));
+  }
+}
+
 function selectMapFeature(idx) {
+  // un-highlight previous
+  if (_selectedMapIdx !== null && _selectedMapIdx !== idx) {
+    _applyHighlight(_selectedMapIdx, false);
+  }
   _selectedMapIdx = idx;
   var item = _mapAllFeatures[idx];
   if (!item) return;
+  // highlight new
+  _applyHighlight(idx, true);
+  // show detail panel
+  renderMapDetail(item.rec);
   // jump to correct page in list
   var pos = _mapFiltered.findIndex(function(i){ return i.idx === idx; });
   if (pos >= 0) _mapListPage = Math.ceil((pos+1) / _mapListPageSize);
@@ -955,6 +988,60 @@ function selectMapFeature(idx) {
     var el = document.querySelector('.map-feat-item[data-idx="'+idx+'"]');
     if (el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
   }, 50);
+}
+
+function renderMapDetail(r) {
+  var panel = document.getElementById('map-detail-panel');
+  panel.style.display = 'block';
+
+  var name = r.nama_subj || r.kegiatan || '(tanpa nama)';
+  var isSudah = r.status === 'SUDAH_TERBIT';
+  document.getElementById('mdp-name').textContent = name;
+  document.getElementById('mdp-meta').innerHTML =
+    '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-weight:700;background:'+(isSudah?'#e0f5f1':'#fff8e1')+';color:'+(isSudah?'#00695c':'#b57900')+'">'+(isSudah?'✅ Sudah Terbit':'⏳ Belum Terbit')+'</span>';
+
+  var fields = [
+    ['Provinsi',  r.provinsi],
+    ['Kegiatan',  r.kegiatan],
+    ['Jenis',     r.jenis],
+    ['Kategori',  r.kategori],
+    ['No. KKPRL', r.no_kkprl],
+    ['Luas',      r.luas_ha ? r.luas_ha.toFixed(3) + ' ha' : null],
+    ['Tgl. Terbit', r.terbit],
+  ];
+  document.getElementById('mdp-rows').innerHTML = fields
+    .filter(function(f){ return f[1]; })
+    .map(function(f){
+      return '<div style="display:flex;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:var(--muted);min-width:80px;font-size:11px">'+f[0]+'</span>'+
+        '<span style="color:var(--text);font-weight:500;font-size:11px;flex:1;word-break:break-word">'+f[1]+'</span>'+
+        '</div>';
+    }).join('');
+
+  // Google Maps link — use centroid of geometry
+  var lat = null, lng = null;
+  try {
+    var g = r._geom;
+    if (g.type === 'Point') { lng = g.coordinates[0]; lat = g.coordinates[1]; }
+    else if (g.type === 'Polygon') {
+      var ring = g.coordinates[0];
+      lng = ring.reduce(function(s,c){return s+c[0];},0)/ring.length;
+      lat = ring.reduce(function(s,c){return s+c[1];},0)/ring.length;
+    } else if (g.type === 'MultiPolygon') {
+      var best = g.coordinates[0][0];
+      g.coordinates.forEach(function(p){ if(p[0].length>best.length) best=p[0]; });
+      lng = best.reduce(function(s,c){return s+c[0];},0)/best.length;
+      lat = best.reduce(function(s,c){return s+c[1];},0)/best.length;
+    }
+  } catch(e){}
+
+  var gmapsLink = document.getElementById('mdp-gmaps');
+  if (lat !== null && lng !== null) {
+    gmapsLink.href = 'https://www.google.com/maps?q=' + lat.toFixed(6) + ',' + lng.toFixed(6) + '&z=16';
+    gmapsLink.style.display = 'flex';
+  } else {
+    gmapsLink.style.display = 'none';
+  }
 }
 
 function renderMapList() {
